@@ -298,7 +298,8 @@ absent. Unit tests only prove the parser handles the samples I wrote; this is wh
 drift from the real formats.
 
 Contributions welcome — especially parser fixes when a vendor changes their page, and
-translations beyond English and Korean (see `Sources/UsageCore/L10n.swift`).
+translations beyond English and Korean. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for how the
+code is laid out and the two rules the design leans on.
 
 ## License
 

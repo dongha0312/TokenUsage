@@ -1,0 +1,37 @@
+name: Something else is broken
+description: Anything that isn't a vendor page change
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Diagnostic output (if relevant)
+      description: |
+        A menu bar app has no visible output, so this is often the only way to see what happened.
+      value: |
+        ```
+        pkill -x TokenUsage
+        TOKENUSAGE_DEBUG=1 /Applications/TokenUsage.app/Contents/MacOS/TokenUsage &
+        sleep 40 && cat /tmp/tokenusage-debug.log
+        ```
+
+  - type: input
+    id: version
+    attributes:
+      label: App version and macOS version
+      placeholder: e.g. 1.0.0 on macOS 15.1

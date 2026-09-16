@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Notifications aren't working
+    url: https://github.com/dongha0312/TokenUsage#troubleshooting
+    about: Almost always the bundle identifier or build type — the README explains it.
+  - name: It's asking me to sign in again
+    url: https://github.com/dongha0312/TokenUsage#troubleshooting
+    about: Usually a changed bundle identifier. The README shows how to carry sessions over.

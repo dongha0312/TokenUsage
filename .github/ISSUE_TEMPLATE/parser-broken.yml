@@ -1,0 +1,55 @@
+name: A provider shows "couldn't read values"
+description: The app can't read numbers from a vendor's page — usually because they changed it
+labels: [parser]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most common failure: a vendor redesigns their usage page and the parser
+        stops matching. The diagnostic output below is what makes it fixable — it captures
+        what the page actually rendered, which is the thing that changed.
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Which provider
+      options: [Claude, Codex (ChatGPT), Gemini]
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Diagnostic output
+      description: |
+        Run this and paste the result. It writes nothing unless you set the variable.
+        Redact anything you'd rather not share — the useful part is the page snippet.
+      value: |
+        <details><summary>TOKENUSAGE_DEBUG output</summary>
+
+        ```
+        pkill -x TokenUsage
+        TOKENUSAGE_DEBUG=1 /Applications/TokenUsage.app/Contents/MacOS/TokenUsage &
+        sleep 40 && cat /tmp/tokenusage-debug.log
+        ```
+
+        (paste here)
+
+        </details>
+    validations:
+      required: true
+
+  - type: input
+    id: language
+    attributes:
+      label: Your account language on that vendor's site
+      description: The parser reads rendered text, so the page's language matters. Currently Korean and English are handled.
+      placeholder: e.g. English, Korean, Japanese
+    validations:
+      required: true
+
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: e.g. 15.1

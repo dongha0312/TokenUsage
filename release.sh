@@ -55,7 +55,31 @@ APP=".xcbuild/Build/Products/Release/$APP_NAME.app"
 codesign --force --options runtime --timestamp --sign "$DEV_ID" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
 
-# --- 2. DMG 조립 --------------------------------------------------------------
+# --- 2. 앱 공증 + 스테이플 ------------------------------------------------------
+#
+# DMG 에만 티켓을 붙이면 앱 자체에는 없다. 사용자가 앱을 Applications 로 복사한 뒤
+# 오프라인이면 Gatekeeper 가 온라인 확인을 못 해 실행이 막히거나 늦어진다.
+# 그래서 앱을 먼저 공증·스테이플하고, 그 앱으로 DMG 를 만든다.
+notarize() {   # $1 = 제출할 파일
+    if ! xcrun notarytool submit "$1" --keychain-profile "$NOTARY_PROFILE" --wait; then
+        echo "공증 실패: $1"
+        exit 1
+    fi
+}
+
+mkdir -p "$OUT"
+if xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then
+    NOTARIZE=1
+    echo "앱 공증 중... (몇 분 걸립니다)"
+    ditto -c -k --keepParent "$APP" "$OUT/app.zip"
+    notarize "$OUT/app.zip"
+    rm -f "$OUT/app.zip"
+    xcrun stapler staple "$APP"
+else
+    NOTARIZE=0
+fi
+
+# --- 3. DMG 조립 --------------------------------------------------------------
 #
 # Applications 심볼릭 링크를 같이 넣어, 열었을 때 끌어다 놓기만 하면 되게 한다.
 mkdir -p "$OUT/staging"
@@ -70,15 +94,15 @@ rm -rf "$OUT/staging"
 codesign --force --sign "$DEV_ID" --timestamp "$DMG"
 echo "생성: $DMG"
 
-# --- 3. 공증 ------------------------------------------------------------------
-#
-# 서명만으로는 부족하다. 공증을 안 하면 처음 여는 사람에게
-# "개발자를 확인할 수 없어 열 수 없습니다" 가 뜬다.
-if xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then
-    echo "공증 중... (몇 분 걸립니다)"
-    xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
+# --- 4. DMG 공증 --------------------------------------------------------------
+if [ "$NOTARIZE" = "1" ]; then
+    echo "DMG 공증 중..."
+    notarize "$DMG"
     xcrun stapler staple "$DMG"
+
+    echo "--- 검증 ---"
     xcrun stapler validate "$DMG"
+    spctl -a -t open --context context:primary-signature -v "$DMG"
     echo "공증 완료: $DMG"
 else
     cat <<MSG
