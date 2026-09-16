@@ -108,12 +108,19 @@ final class WebUsageReader {
 
     func fetch(now: Date = Date()) async -> ProviderUsage {
         let view = makeWebView()
-        view.load(URLRequest(url: config.url))
+
+        // 사용자가 로그인 창을 열어둔 동안에는 페이지를 갈아끼우지 않는다.
+        // 예약 갱신이 5분마다 도는데, 비밀번호나 인증 코드를 입력하는 중에
+        // 화면을 다시 로드해버리면 처음부터 다시 해야 한다.
+        let loginWindowOpen = window?.isVisible == true
+        if !loginWindowOpen { view.load(URLRequest(url: config.url)) }
         defer { teardown() }
 
         // SPA라 로드 완료와 내용 렌더가 어긋난다. 문구가 뜰 때까지 짧게 재확인한다.
+        // 로그인 창이 열려 있으면 그 화면을 잠깐만 들여다보고 비켜준다.
+        // (로그인을 막 마쳤으면 이미 사용량 화면일 수 있다.)
         let startedAt = Date()
-        let deadline = startedAt.addingTimeInterval(30)
+        let deadline = startedAt.addingTimeInterval(loginWindowOpen ? 3 : 30)
         while Date() < deadline {
             try? await Task.sleep(for: .seconds(1))
 

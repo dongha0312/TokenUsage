@@ -35,6 +35,10 @@ if [ "${NO_XCODE:-0}" = "1" ] || [ ! -d "$APP_NAME.xcodeproj" ]; then
     rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS"
     cp "$BIN" "$APP/Contents/MacOS/$APP_NAME"
     sed "s|\$(PRODUCT_BUNDLE_IDENTIFIER)|$BUNDLE_ID|" Xcode/Info.plist > "$APP/Contents/Info.plist"
+    mkdir -p "$APP/Contents/Resources"
+    [ -f Xcode/AppIcon.icns ] || swift Xcode/make-icon.swift >/dev/null 2>&1 \
+        && iconutil -c icns Xcode/AppIcon.iconset -o Xcode/AppIcon.icns 2>/dev/null || true
+    cp Xcode/AppIcon.icns "$APP/Contents/Resources/" 2>/dev/null || true
 
     SIGN_ID=$(find_identity)
     codesign --force --sign "$SIGN_ID" --options runtime "$APP" 2>/dev/null \

@@ -27,9 +27,10 @@ extension Provider {
     }
 
     /// NSWorkspace 조회는 싸지 않으니 한 번만 한다.
-    private static var iconCache: [Provider: NSImage] = [:]
+    /// 뷰에서만 쓰므로 메인 액터에 묶어 동시 접근을 원천적으로 없앤다.
+    @MainActor private static var iconCache: [Provider: NSImage] = [:]
 
-    func icon(size: CGFloat) -> NSImage? {
+    @MainActor func icon(size: CGFloat) -> NSImage? {
         if let cached = Provider.iconCache[self] { return cached.resized(to: size) }
         let ws = NSWorkspace.shared
         for id in appBundleIdentifiers {

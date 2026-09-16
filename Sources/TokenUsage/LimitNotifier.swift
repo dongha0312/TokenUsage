@@ -68,7 +68,8 @@ final class LimitNotifier {
     }
 
     private func post(provider: Provider, window: UsageWindow) {
-        guard let used = window.usedPercent else { return }
+        // 권한이 없으면 보내봐야 조용히 버려진다. 로그만 지저분해진다.
+        guard authorized, let used = window.usedPercent else { return }
         let content = UNMutableNotificationContent()
         content.title = L10n.nearLimitTitle(provider.rawValue)
         content.body = L10n.nearLimitBody(window.label,

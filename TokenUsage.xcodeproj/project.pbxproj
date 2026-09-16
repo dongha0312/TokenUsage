@@ -14,6 +14,7 @@
 		0B2000000000000000000005 /* UsageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B1000000000000000000005 /* UsageModel.swift */; };
 		0B2000000000000000000006 /* WebUsageReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B1000000000000000000006 /* WebUsageReader.swift */; };
 		0B0000000000000000000012 /* UsageCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0B0000000000000000000011 /* UsageCore */; };
+		0B3000000000000000000002 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 0B3000000000000000000001 /* AppIcon.icns */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		0B1000000000000000000006 /* WebUsageReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WebUsageReader.swift; path = "Sources/TokenUsage/WebUsageReader.swift"; sourceTree = SOURCE_ROOT; };
 		0B000000000000000000000F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Xcode/Info.plist"; sourceTree = SOURCE_ROOT; };
 		0B0000000000000000000005 /* TokenUsage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TokenUsage.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0B3000000000000000000001 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = AppIcon.icns; path = "Xcode/AppIcon.icns"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,7 +37,7 @@
 /* Begin PBXGroup section */
 		0B0000000000000000000002 = {isa = PBXGroup; children = (0B0000000000000000000004 /* Sources */, 0B0000000000000000000003 /* Products */, ); sourceTree = "<group>"; };
 		0B0000000000000000000003 /* Products */ = {isa = PBXGroup; children = (0B0000000000000000000005 /* TokenUsage.app */, ); name = Products; sourceTree = "<group>"; };
-		0B0000000000000000000004 /* Sources */ = {isa = PBXGroup; children = (0B1000000000000000000000 /* LimitNotifier.swift */, 0B1000000000000000000001 /* LoginItem.swift */, 0B1000000000000000000002 /* PanelView.swift */, 0B1000000000000000000003 /* ProviderIcon.swift */, 0B1000000000000000000004 /* TokenUsageApp.swift */, 0B1000000000000000000005 /* UsageModel.swift */, 0B1000000000000000000006 /* WebUsageReader.swift */, 0B000000000000000000000F /* Info.plist */, ); name = Sources; sourceTree = "<group>"; };
+		0B0000000000000000000004 /* Sources */ = {isa = PBXGroup; children = (0B1000000000000000000000 /* LimitNotifier.swift */, 0B1000000000000000000001 /* LoginItem.swift */, 0B1000000000000000000002 /* PanelView.swift */, 0B1000000000000000000003 /* ProviderIcon.swift */, 0B1000000000000000000004 /* TokenUsageApp.swift */, 0B1000000000000000000005 /* UsageModel.swift */, 0B1000000000000000000006 /* WebUsageReader.swift */, 0B000000000000000000000F /* Info.plist */, 0B3000000000000000000001 /* AppIcon.icns */, ); name = Sources; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -71,7 +73,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		0B0000000000000000000007 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		0B0000000000000000000007 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (0B3000000000000000000002 /* AppIcon.icns in Resources */, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
