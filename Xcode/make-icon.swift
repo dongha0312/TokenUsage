@@ -4,8 +4,14 @@
 //
 //   swift Xcode/make-icon.swift
 //
-// 이미지 파일을 저장소에 커밋하는 대신 스크립트를 둔다. 디자인을 고치려면 여기만 고치면 되고,
-// 각 크기를 축소가 아니라 직접 그려서 16pt 에서도 막대가 뭉개지지 않는다.
+// 산출물(AppIcon.icns)은 빌드 입력이라 저장소에 함께 커밋한다. 이 스크립트는 그걸 다시 만드는
+// 수단이다 — 디자인을 고치려면 여기만 고치고 아래 명령을 다시 돌리면 된다.
+//
+// 각 크기를 축소가 아니라 직접 그린다. 그래서 16pt 에서도 막대가 뭉개지지 않는다.
+// 단, NSImage.lockFocus() 는 쓰면 안 된다. 화면의 backing scale 로 렌더해서 레티나에서는
+// 모든 PNG 가 2배로 나오고, iconutil 은 파일명이 아니라 실제 픽셀로 분류하므로 슬롯이
+// 한 단계씩 밀려 16pt 칸이 비어버린다. 1배 화면에서는 결과까지 달라진다.
+// 그래서 픽셀 크기를 명시한 NSBitmapImageRep 에 직접 그린다.
 //
 // 모티프는 패널에 있는 사용량 막대 그대로다. 세 줄은 세 서비스를, 채움 정도는 사용량을 뜻한다.
 // 맨 아래만 경고색인 건 "한도에 가까운 하나를 메뉴바에 띄운다"는 앱의 동작을 그대로 보여준다.
@@ -30,13 +36,22 @@ let bars: [(fill: CGFloat, warning: Bool)] = [
     (0.86, true),
 ]
 
-func draw(size: Int) -> NSImage {
-    let s = CGFloat(size)
-    let image = NSImage(size: NSSize(width: s, height: s))
-    image.lockFocus()
-    defer { image.unlockFocus() }
+/// 지정한 픽셀 수만큼 정확히 그려 PNG 로 돌려준다.
+func drawPNG(size: Int) -> Data? {
+    guard let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil, pixelsWide: size, pixelsHigh: size,
+        bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+        colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
+        let gctx = NSGraphicsContext(bitmapImageRep: rep) else { return nil }
 
-    guard let ctx = NSGraphicsContext.current?.cgContext else { return image }
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = gctx
+    defer {
+        NSGraphicsContext.restoreGraphicsState()
+    }
+
+    let s = CGFloat(size)
+    let ctx = gctx.cgContext
     ctx.setShouldAntialias(true)
     ctx.interpolationQuality = .high
 
@@ -64,10 +79,14 @@ func draw(size: Int) -> NSImage {
                                options: [])
     }
 
-    // 막대
-    let barHeight = rect.height * 0.118
-    let gap = rect.height * 0.105
-    let sideInset = rect.width * 0.155
+    // 막대.
+    //
+    // 작은 크기에서는 비율을 그대로 쓰면 막대가 1~2px 로 얇아져 색이 구분되지 않는다.
+    // 크기별로 직접 그리는 이유가 이것이다 — 여백을 줄이고 막대를 두껍게 가져간다.
+    let small = size <= 32
+    let barHeight = rect.height * (small ? 0.165 : 0.118)
+    let gap = rect.height * (small ? 0.075 : 0.105)
+    let sideInset = rect.width * (small ? 0.105 : 0.155)
     let trackWidth = rect.width - sideInset * 2
     let block = barHeight * CGFloat(bars.count) + gap * CGFloat(bars.count - 1)
     var y = rect.midY + block / 2 - barHeight
@@ -101,13 +120,7 @@ func draw(size: Int) -> NSImage {
     ctx.setLineWidth(max(1, s * 0.0035))
     ctx.strokePath()
 
-    return image
-}
-
-func png(_ image: NSImage, size: Int) -> Data? {
-    guard let tiff = image.tiffRepresentation,
-          let rep = NSBitmapImageRep(data: tiff) else { return nil }
-    rep.size = NSSize(width: size, height: size)
+    gctx.flushGraphics()
     return rep.representation(using: .png, properties: [:])
 }
 
@@ -118,7 +131,7 @@ try! FileManager.default.createDirectory(atPath: outDir, withIntermediateDirecto
 var rendered: [Int: Data] = [:]
 for output in outputs {
     if rendered[output.pixels] == nil {
-        rendered[output.pixels] = png(draw(size: output.pixels), size: output.pixels)
+        rendered[output.pixels] = drawPNG(size: output.pixels)
     }
     guard let data = rendered[output.pixels] else { continue }
     try? data.write(to: URL(fileURLWithPath: "\(outDir)/\(output.name).png"))

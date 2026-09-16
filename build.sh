@@ -27,6 +27,17 @@ find_identity() {
     echo "-"
 }
 
+# 아이콘은 두 경로 모두의 빌드 입력이다. Xcode 프로젝트가 리소스로 참조하므로
+# 없으면 xcodebuild 자체가 실패한다. 커밋돼 있지만, 지운 경우를 대비해 여기서 되살린다.
+#
+# 주의: `[ -f x ] || A && B` 는 `([ -f x ] || A) && B` 로 묶여서 B 가 항상 돌아간다.
+# ||, && 는 우선순위가 같고 왼쪽 결합이다. 그래서 if 문으로 명시한다.
+if [ ! -f Xcode/AppIcon.icns ]; then
+    echo "아이콘 생성 중..."
+    swift Xcode/make-icon.swift
+    iconutil -c icns Xcode/AppIcon.iconset -o Xcode/AppIcon.icns
+fi
+
 if [ "${NO_XCODE:-0}" = "1" ] || [ ! -d "$APP_NAME.xcodeproj" ]; then
     # --- SwiftPM 경로 ---
     swift build -c "$(echo "$CONFIG" | tr '[:upper:]' '[:lower:]')"
@@ -36,9 +47,7 @@ if [ "${NO_XCODE:-0}" = "1" ] || [ ! -d "$APP_NAME.xcodeproj" ]; then
     cp "$BIN" "$APP/Contents/MacOS/$APP_NAME"
     sed "s|\$(PRODUCT_BUNDLE_IDENTIFIER)|$BUNDLE_ID|" Xcode/Info.plist > "$APP/Contents/Info.plist"
     mkdir -p "$APP/Contents/Resources"
-    [ -f Xcode/AppIcon.icns ] || swift Xcode/make-icon.swift >/dev/null 2>&1 \
-        && iconutil -c icns Xcode/AppIcon.iconset -o Xcode/AppIcon.icns 2>/dev/null || true
-    cp Xcode/AppIcon.icns "$APP/Contents/Resources/" 2>/dev/null || true
+    cp Xcode/AppIcon.icns "$APP/Contents/Resources/" || echo "경고: 아이콘 복사 실패"
 
     SIGN_ID=$(find_identity)
     codesign --force --sign "$SIGN_ID" --options runtime "$APP" 2>/dev/null \
