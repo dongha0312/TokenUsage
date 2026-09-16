@@ -41,7 +41,7 @@
 /* Begin PBXGroup section */
 		0B0000000000000000000002 = {isa = PBXGroup; children = (0B0000000000000000000004 /* Sources */, 0B0000000000000000000003 /* Products */, ); sourceTree = "<group>"; };
 		0B0000000000000000000003 /* Products */ = {isa = PBXGroup; children = (0B0000000000000000000005 /* TokenUsage.app */, ); name = Products; sourceTree = "<group>"; };
-		0B0000000000000000000004 /* Sources */ = {isa = PBXGroup; children = (0B1000000000000000000000 /* LimitNotifier.swift */, 0B1000000000000000000001 /* LoginItem.swift */, 0B1000000000000000000002 /* PanelView.swift */, 0B1000000000000000000003 /* ProviderIcon.swift */, 0B1000000000000000000004 /* TokenUsageApp.swift */, 0B1000000000000000000005 /* UsageModel.swift */, 0B1000000000000000000006 /* WebUsageReader.swift */, 0B000000000000000000000F 0B4000000000000000000000 /* Snapshot.swift */, 0B4000000000000000000001 /* MenuBarLabel.swift */, /* Info.plist */, 0B3000000000000000000001 /* AppIcon.icns */, ); name = Sources; sourceTree = "<group>"; };
+		0B0000000000000000000004 /* Sources */ = {isa = PBXGroup; children = (0B1000000000000000000000 /* LimitNotifier.swift */, 0B1000000000000000000001 /* LoginItem.swift */, 0B1000000000000000000002 /* PanelView.swift */, 0B1000000000000000000003 /* ProviderIcon.swift */, 0B1000000000000000000004 /* TokenUsageApp.swift */, 0B1000000000000000000005 /* UsageModel.swift */, 0B1000000000000000000006 /* WebUsageReader.swift */, 0B4000000000000000000000 /* Snapshot.swift */, 0B4000000000000000000001 /* MenuBarLabel.swift */, 0B000000000000000000000F /* Info.plist */, 0B3000000000000000000001 /* AppIcon.icns */, ); name = Sources; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */

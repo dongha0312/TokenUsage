@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Test
+        run: swift test
+
+      # 앱 타깃은 서명 없이도 컴파일돼야 한다. 포크한 사람이 인증서 없이 받아도
+      # 최소한 빌드는 되는지 여기서 걸러진다.
+      - name: Build the app target
+        run: |
+          xcodebuild -project TokenUsage.xcodeproj -scheme TokenUsage \
+            -configuration Release -derivedDataPath .xcbuild \
+            CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual \
+            CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            build | xcbeautify || xcodebuild -project TokenUsage.xcodeproj \
+            -scheme TokenUsage -configuration Release -derivedDataPath .xcbuild \
+            CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual \
+            CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
+
+      # 문서 스크린샷은 앱 뷰를 그대로 렌더한다. 뷰가 깨지면 여기서 드러난다.
+      - name: Render docs screenshots
+        run: .xcbuild/Build/Products/Release/TokenUsage.app/Contents/MacOS/TokenUsage --snapshot /tmp/shots
+
+      - name: Check screenshots were produced
+        run: |
+          count=$(ls /tmp/shots/*.png | wc -l | tr -d ' ')
+          echo "생성된 이미지: $count"
+          [ "$count" -eq 12 ] || { echo "이미지 12장이 나와야 합니다"; exit 1; }

@@ -11,6 +11,7 @@
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![Dependencies](https://img.shields.io/badge/의존성-없음-brightgreen)
 ![Tests](https://img.shields.io/badge/테스트-91개-brightgreen)
+[![CI](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml/badge.svg)](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/panel-ko-dark.png">
@@ -46,8 +47,9 @@ UI는 시스템 언어를 따릅니다(한국어·영어).
 ### 1. 준비물
 
 - **macOS 14 (Sonoma) 이상**
-- **Xcode** — [App Store에서 무료](https://apps.apple.com/app/xcode/id497799835).
-  빌드에 필요합니다. **유료 개발자 계정은 필요 없습니다.**
+- **Xcode** — 소스에서 직접 빌드할 때만 필요합니다.
+  [App Store에서 무료](https://apps.apple.com/app/xcode/id497799835)이고
+  **유료 개발자 계정은 필요 없습니다.**
 - Claude / ChatGPT(Codex) / Gemini 구독 중 하나 이상. 로그인한 것만 표시됩니다.
 
 명령줄 도구가 설치돼 있는지 확인하세요.
@@ -56,7 +58,12 @@ UI는 시스템 언어를 따릅니다(한국어·영어).
 xcode-select --install     # 이미 설치돼 있다는 메시지가 나오면 넘어가세요
 ```
 
-### 2. 내려받아 빌드
+### 2. 앱 받기
+
+**가장 쉬운 방법:** [Releases](https://github.com/dongha0312/TokenUsage/releases) 에서
+`.dmg` 를 받아 Applications 로 끌어다 놓으세요. Xcode 가 필요 없습니다.
+
+직접 빌드하려면:
 
 ```sh
 git clone https://github.com/dongha0312/TokenUsage.git

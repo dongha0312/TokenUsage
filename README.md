@@ -11,6 +11,7 @@
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Tests](https://img.shields.io/badge/tests-91-brightgreen)
+[![CI](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml/badge.svg)](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/panel-en-dark.png">
