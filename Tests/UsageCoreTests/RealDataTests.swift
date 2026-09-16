@@ -44,9 +44,12 @@ final class RealDataTests: XCTestCase {
         XCTAssertFalse(usage.windows.contains { $0.label == "한도" }, "window_minutes 파싱 실패")
     }
 
-    func testMenuBarStringFromRealData() {
+    func testMenuBarStringFromRealData() throws {
         let now = Date()
         let usages = [ClaudeReader.read(now: now), CodexReader.read(now: now)]
+        // CI 처럼 로컬 데이터가 없는 환경에서는 검증할 게 없다.
+        try XCTSkipIf(usages.allSatisfy { $0.windows.isEmpty }, "로컬 사용량 데이터 없음")
+
         let text = menuBarText(for: usages, now: now)
         print("[메뉴바] \"\(text)\"")
         XCTAssertNotEqual(text, "—")

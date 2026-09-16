@@ -11,6 +11,18 @@ func date(_ y: Int, _ mo: Int, _ d: Int, _ h: Int, _ mi: Int = 0) -> Date {
     seoul.date(from: DateComponents(year: y, month: mo, day: d, hour: h, minute: mi))!
 }
 
+/// 표시 문자열을 검증하는 테스트의 바탕.
+///
+/// `L10n.isKorean` 은 기기 언어에서 초기화되는 전역 상태다. 고정하지 않으면 한국어 기기에서만
+/// 통과하고 CI(영어)에서 깨진다. 실제로 그렇게 깨졌다. 게다가 한 테스트가 값을 바꾸면
+/// 뒤에 도는 테스트까지 영향을 받아 실행 순서에 따라 결과가 달라진다.
+class LocalizedTestCase: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        L10n.isKorean = true
+    }
+}
+
 private func limit(kind: String, percent: Double, resetsAt: String?,
                    modelName: String? = nil) -> [String: Any] {
     var item: [String: Any] = ["kind": kind, "percent": percent]
@@ -21,7 +33,7 @@ private func limit(kind: String, percent: Double, resetsAt: String?,
 
 // MARK: - Claude 캐시 파싱
 
-final class ClaudeLimitsTests: XCTestCase {
+final class ClaudeLimitsTests: LocalizedTestCase {
     /// ~/.claude.json 에서 실제로 읽은 limits 배열. /usage 화면의 10% / 5% / 0% 과 같은 값.
     private let realLimits: [[String: Any]] = [
         ["kind": "session", "group": "session", "percent": 10, "severity": "normal",
@@ -118,7 +130,7 @@ final class ClaudeDateTests: XCTestCase {
 
 // MARK: - Claude 설정 파일 읽기
 
-final class ClaudeConfigTests: XCTestCase {
+final class ClaudeConfigTests: LocalizedTestCase {
     private func write(_ json: Any) throws -> URL {
         let url = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("claude-\(UUID().uuidString).json")
@@ -179,7 +191,7 @@ final class ClaudeConfigTests: XCTestCase {
 
 // MARK: - Codex
 
-final class CodexTests: XCTestCase {
+final class CodexTests: LocalizedTestCase {
     func testMapsRealRateLimitShape() {
         let limits: [String: Any] = [
             "primary": ["used_percent": 1.0, "window_minutes": 300, "resets_at": 1789235819.0],
@@ -203,7 +215,7 @@ final class CodexTests: XCTestCase {
 
 // MARK: - Codex 스냅샷 만료
 
-final class CodexStalenessTests: XCTestCase {
+final class CodexStalenessTests: LocalizedTestCase {
     private let now = date(2026, 9, 16, 17, 0)
 
     func testExpiredWindowReportsEmptyNotStaleNumber() {
@@ -238,7 +250,7 @@ final class CodexStalenessTests: XCTestCase {
 
 // MARK: - Gemini 페이지 파싱
 
-final class GeminiParseTests: XCTestCase {
+final class GeminiParseTests: LocalizedTestCase {
     private let realPage = """
     Usage limits
     PRO
@@ -296,7 +308,7 @@ final class GeminiParseTests: XCTestCase {
 
 // MARK: - 표시 로직
 
-final class DisplayTests: XCTestCase {
+final class DisplayTests: LocalizedTestCase {
     private func usage(_ p: Provider, used: Double?) -> ProviderUsage {
         .init(provider: p,
               windows: [UsageWindow(kind: .session(hours: 5), usedPercent: used, resetsAt: nil)],
@@ -378,7 +390,7 @@ final class DisplayTests: XCTestCase {
 
 // MARK: - 남은 시간 표기
 
-final class TimeToResetTests: XCTestCase {
+final class TimeToResetTests: LocalizedTestCase {
     private let now = date(2026, 9, 16, 17, 0)
 
     private func window(_ seconds: TimeInterval) -> UsageWindow {
@@ -410,7 +422,7 @@ final class TimeToResetTests: XCTestCase {
 
 // MARK: - claude.ai 사용량 페이지 파싱
 
-final class ClaudeWebParseTests: XCTestCase {
+final class ClaudeWebParseTests: LocalizedTestCase {
     /// claude.ai/settings/usage 에서 실제로 캡처한 텍스트.
     /// 아래쪽 "제품별 사용량" 의 100% / 0% 막대가 한도로 오해되지 않아야 한다.
     private let realPage = """
@@ -529,7 +541,7 @@ final class ClaudeWebParseTests: XCTestCase {
 
 // MARK: - chatgpt.com Codex 사용량 페이지 파싱
 
-final class CodexWebParseTests: XCTestCase {
+final class CodexWebParseTests: LocalizedTestCase {
     /// chatgpt.com/codex/cloud/settings/analytics#usage 에서 실제로 캡처한 텍스트.
     /// 퍼센트와 "남음"이 다른 줄에 있고, 아래쪽 차트에도 0%/100% 축 눈금이 있다.
     private let realPage = """
@@ -631,12 +643,7 @@ final class CodexWebParseTests: XCTestCase {
 
 // MARK: - 다국어 · 라벨
 
-final class LocalizationTests: XCTestCase {
-    override func tearDown() {
-        L10n.isKorean = true
-        super.tearDown()
-    }
-
+final class LocalizationTests: LocalizedTestCase {
     /// 파서는 문구가 아니라 의미를 넘긴다. 표시 언어는 시스템을 따른다.
     func testSameKindRendersInBothLanguages() {
         L10n.isKorean = true
@@ -706,7 +713,7 @@ final class SeverityTests: XCTestCase {
 
 // MARK: - claude.ai 축약 요일
 
-final class ClaudeWeekdayTests: XCTestCase {
+final class ClaudeWeekdayTests: LocalizedTestCase {
     /// 페이지가 "재설정: (목) 오전 2:10" 처럼 축약형을 쓴다.
     /// 전체 이름만 찾으면 "오늘/내일"로 잘못 계산해 며칠씩 어긋난다.
     func testAbbreviatedWeekday() {
@@ -813,9 +820,7 @@ final class FillMissingResetsTests: XCTestCase {
 
 // MARK: - 창 길이를 지어내지 않는다
 
-final class SessionLengthTests: XCTestCase {
-    override func tearDown() { L10n.isKorean = true; super.tearDown() }
-
+final class SessionLengthTests: LocalizedTestCase {
     /// Gemini는 현재 창의 길이를 공개하지 않는다.
     /// 여기에 5를 넣으면 "5시간 한도"라고 거짓말하게 된다.
     func testGeminiSessionHasNoStatedLength() {
@@ -855,7 +860,7 @@ final class SessionLengthTests: XCTestCase {
 
 // MARK: - 메뉴바 기준 선택
 
-final class MenuBarSelectionTests: XCTestCase {
+final class MenuBarSelectionTests: LocalizedTestCase {
     private func usage(_ p: Provider, session: Double?, weekly: Double?) -> ProviderUsage {
         var windows: [UsageWindow] = []
         if let session { windows.append(UsageWindow(kind: .session(hours: 5), usedPercent: session, resetsAt: nil)) }
@@ -906,7 +911,7 @@ final class MenuBarSelectionTests: XCTestCase {
 
 // MARK: - 메뉴바 표시 방식 · 갱신 주기
 
-final class MenuBarStyleTests: XCTestCase {
+final class MenuBarStyleTests: LocalizedTestCase {
     private func usage(_ p: Provider, session: Double?, weekly: Double?) -> ProviderUsage {
         var windows: [UsageWindow] = []
         if let session { windows.append(UsageWindow(kind: .session(hours: 5), usedPercent: session, resetsAt: nil)) }
