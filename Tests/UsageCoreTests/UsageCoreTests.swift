@@ -852,3 +852,54 @@ final class SessionLengthTests: XCTestCase {
         XCTAssertNotEqual(WindowKind.session(hours: nil).id, WindowKind.session(hours: 5).id)
     }
 }
+
+// MARK: - 메뉴바 기준 선택
+
+final class MenuBarSelectionTests: XCTestCase {
+    private func usage(_ p: Provider, session: Double?, weekly: Double?) -> ProviderUsage {
+        var windows: [UsageWindow] = []
+        if let session { windows.append(UsageWindow(kind: .session(hours: 5), usedPercent: session, resetsAt: nil)) }
+        if let weekly { windows.append(UsageWindow(kind: .weekly, usedPercent: weekly, resetsAt: nil)) }
+        return ProviderUsage(provider: p, windows: windows, updatedAt: Date())
+    }
+
+    /// 실제로 겪은 상황: Codex 주간 45% 가 Codex 세션 2% 를 가려서,
+    /// 정작 여유가 많은 서비스가 제일 급한 것처럼 메뉴바에 올라갔다.
+    func testWeeklyDoesNotMaskSession() {
+        let picked = mostUrgent(among: [
+            usage(.claude, session: 23, weekly: 9),
+            usage(.codex, session: 2, weekly: 45),
+            usage(.gemini, session: 0, weekly: 0),
+        ])
+        XCTAssertEqual(picked?.0.provider, .claude, "세션이 가장 높은 쪽이 올라와야 한다")
+        XCTAssertEqual(picked?.1.usedPercent ?? -1, 23, accuracy: 0.01)
+    }
+
+    /// 주간이 진짜 위험해지면 숨기면 안 된다.
+    func testDangerousWeeklyStillSurfaces() {
+        let picked = mostUrgent(among: [
+            usage(.claude, session: 23, weekly: 9),
+            usage(.codex, session: 2, weekly: 92),
+        ])
+        XCTAssertEqual(picked?.0.provider, .codex)
+        XCTAssertEqual(picked?.1.kind, .weekly)
+    }
+
+    /// 경고 문턱(80%) 아래의 주간은 여전히 조용하다.
+    func testWeeklyJustBelowThresholdStaysQuiet() {
+        let picked = mostUrgent(among: [
+            usage(.claude, session: 10, weekly: 79),
+        ])
+        XCTAssertEqual(picked?.1.kind, .session(hours: 5))
+    }
+
+    /// 세션 창이 없는 제공자만 있으면 그거라도 보여준다.
+    func testFallsBackWhenNoSessionWindows() {
+        let picked = mostUrgent(among: [usage(.gemini, session: nil, weekly: 30)])
+        XCTAssertEqual(picked?.1.kind, .weekly)
+    }
+
+    func testNothingUsableGivesNil() {
+        XCTAssertNil(mostUrgent(among: [.unavailable(.claude, "x")]))
+    }
+}

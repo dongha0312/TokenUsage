@@ -144,6 +144,11 @@ final class WebUsageReader {
             // "페이지 구조가 바뀐 듯"이라고 잘못 보고하게 된다.
             let parsed = config.parse(text, now)
             guard !parsed.windows.isEmpty else { continue }
+
+            // 수치가 읽혔다는 건 로그인이 끝났다는 뜻이다. 열어둔 로그인 창을 치워준다.
+            // 사용자가 "됐나?" 하고 직접 닫을 이유가 없다.
+            if window?.isVisible == true { window?.performClose(nil) }
+
             return ProviderUsage(provider: config.provider, windows: parsed.windows,
                                  updatedAt: now, plan: parsed.plan)
         }

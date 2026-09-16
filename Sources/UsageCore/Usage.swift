@@ -24,6 +24,12 @@ public enum WindowKind: Sendable, Equatable, Hashable {
     /// 알 수 없는 종류. 벤더 문구를 그대로 통과시킨다.
     case other(String)
 
+    /// 지금 진행 중인 짧은 창인가. 메뉴바 기준을 고를 때 쓴다.
+    public var isSession: Bool {
+        if case .session = self { return true }
+        return false
+    }
+
     /// 정렬·중복 제거용 안정 키
     public var id: String {
         switch self {
@@ -113,10 +119,22 @@ public struct ProviderUsage: Sendable, Equatable {
     }
 }
 
-/// 여러 제공자 중 메뉴바에 올릴 하나를 고른다. 가장 많이 쓴 쪽.
+/// 여러 제공자 중 메뉴바에 올릴 하나를 고른다.
+///
+/// **세션 창을 기준으로 삼는다.** 지금 당장 나를 막는 건 세션 한도이고, 주간은 며칠 뒤 얘기다.
+/// 주간을 같이 놓고 최대값을 고르면 "주간 45%" 가 "세션 2%" 를 가려서, 정작 지금 여유가
+/// 많은 서비스가 제일 급한 것처럼 보인다.
+///
+/// 다만 주간이 실제로 위험해지면(경고 이상) 숨기면 안 되므로 그때만 후보에 넣는다.
 public func mostUrgent(among usages: [ProviderUsage]) -> (ProviderUsage, UsageWindow)? {
-    usages.compactMap { u in u.mostUrgent.map { (u, $0) } }
-          .max { ($0.1.usedPercent ?? 0) < ($1.1.usedPercent ?? 0) }
+    let all = usages.flatMap { usage in usage.windows.map { (usage, $0) } }
+                    .filter { $0.1.usedPercent != nil }
+    let sessions = all.filter { $0.1.kind.isSession }
+    let urgentOthers = all.filter { !$0.1.kind.isSession && $0.1.severity != .normal }
+
+    // 세션 창이 아예 없는 제공자만 있을 수도 있다. 그때는 전부를 후보로 둔다.
+    let pool = sessions.isEmpty ? all : sessions + urgentOthers
+    return pool.max { ($0.1.usedPercent ?? 0) < ($1.1.usedPercent ?? 0) }
 }
 
 /// 메뉴바 한 줄에 들어갈 텍스트. 아이콘은 호출하는 쪽이 붙인다.

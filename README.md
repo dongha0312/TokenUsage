@@ -3,7 +3,8 @@
 A macOS menu bar app that shows how much of your **Claude**, **Codex (ChatGPT)** and
 **Gemini** subscription you have used, and when each limit resets.
 
-Collapsed, it shows only the one closest to its limit:
+Collapsed, it shows the **5-hour limit** closest to running out — the one that can actually
+block you right now. A weekly limit only takes over the menu bar once it passes 80%:
 
 ```
 [icon] 45% · 2d
