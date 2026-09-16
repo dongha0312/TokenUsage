@@ -30,8 +30,18 @@ final class UsageModel: ObservableObject {
 
     /// 로컬 파일 읽기는 싸다.
     private let localInterval: Duration = .seconds(10)
-    /// 웹뷰 조회는 네트워크다. 벤더를 두드리지 않게 넉넉히 둔다.
-    private let webInterval: Duration = .seconds(300)
+
+    /// 웹뷰 조회 주기. 벤더 페이지를 실제로 여는 작업이라 사용자가 고를 수 있게 했다.
+    @Published private(set) var refreshInterval: RefreshInterval = {
+        let stored = UserDefaults.standard.integer(forKey: "refreshIntervalMinutes")
+        return RefreshInterval(rawValue: stored) ?? .fiveMinutes
+    }()
+
+    /// 메뉴바에 하나만 띄울지 전부 띄울지.
+    @Published private(set) var menuBarStyle: MenuBarStyle = {
+        let stored = UserDefaults.standard.string(forKey: "menuBarStyle") ?? ""
+        return MenuBarStyle(rawValue: stored) ?? .urgent
+    }()
 
     init() { start() }
 
@@ -52,14 +62,16 @@ final class UsageModel: ObservableObject {
             // 권한만 받고 전달이 안 되는 경우가 따로 있다.
             if Self.debugEnabled { notifier.sendEnabledConfirmation() }
         }
-        Task { await loop(localInterval) { await self.refreshLocal() } }
-        Task { await loop(webInterval) { await self.refreshWeb() } }
+        Task { await loop({ self.localInterval }) { await self.refreshLocal() } }
+        // 주기는 설정에서 바뀔 수 있으므로 매 회차에 다시 읽는다.
+        Task { await loop({ .seconds(self.refreshInterval.minutes * 60) }) { await self.refreshWeb() } }
     }
 
-    private func loop(_ every: Duration, _ body: @escaping () async -> Void) async {
+    private func loop(_ every: @escaping () -> Duration,
+                      _ body: @escaping () async -> Void) async {
         while !Task.isCancelled {
             await body()
-            try? await Task.sleep(for: every)
+            try? await Task.sleep(for: every())
         }
     }
 
@@ -168,6 +180,7 @@ final class UsageModel: ObservableObject {
     /// 앱 웹뷰가 막히거나 수치가 의심스러울 때 직접 대조할 수 있어야 한다.
     func openUsagePage(for provider: Provider) {
         guard let url = webReaders[provider]?.publicURL else { return }
+        Self.debug("페이지 열기: \(provider.rawValue) → \(url.absoluteString)")
         NSWorkspace.shared.open(url)
     }
 
@@ -178,6 +191,18 @@ final class UsageModel: ObservableObject {
     }
 
     func openLoginItemsSettings() { LoginItem.openLoginItemsSettings() }
+
+    func setRefreshInterval(_ interval: RefreshInterval) {
+        refreshInterval = interval
+        UserDefaults.standard.set(interval.rawValue, forKey: "refreshIntervalMinutes")
+        // 더 짧게 바꿨으면 다음 회차를 기다리지 않고 바로 반영해준다.
+        Task { await refreshWeb() }
+    }
+
+    func setMenuBarStyle(_ style: MenuBarStyle) {
+        menuBarStyle = style
+        UserDefaults.standard.set(style.rawValue, forKey: "menuBarStyle")
+    }
 
     func setNotifyNearLimit(_ on: Bool) {
         notifyNearLimit = on
@@ -207,6 +232,11 @@ final class UsageModel: ObservableObject {
     var menuBarProvider: Provider? { mostUrgent(among: usages)?.0.provider }
 
     var menuBarText: String { UsageCore.menuBarText(for: usages) }
+
+    /// `.all` 모드에서 제공자별로 아이콘과 함께 늘어놓을 항목.
+    var menuBarEntries: [(provider: Provider, text: String)] {
+        UsageCore.menuBarEntries(for: usages)
+    }
 
     /// 메뉴바에 경고를 띄울지. 알림과 달리 권한이 필요 없어서 어떤 빌드에서도 동작한다.
     var menuBarSeverity: UsageWindow.Severity {

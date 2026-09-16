@@ -83,6 +83,17 @@ public enum L10n {
         pick("\(name) 확인 중", "Checking \(name)")
     }
     public static var openUsagePage: String { pick("사용량 페이지 열기", "Open usage page") }
+    public static var menuBarStyle: String { pick("메뉴바에 표시할 것", "Show in the menu bar") }
+    public static var styleUrgentHint: String {
+        pick("한도에 가장 가까운 하나", "just the one closest to its limit")
+    }
+    public static var styleAllHint: String {
+        pick("세 서비스 전부", "all three services")
+    }
+    public static var refreshEvery: String { pick("갱신 주기", "Refresh every") }
+    public static var refreshHint: String {
+        pick("벤더 페이지를 실제로 여는 작업입니다", "each refresh actually loads the vendor pages")
+    }
     public static var notifyNearLimit: String { pick("한도 임박 시 알림", "Notify when near limit") }
     /// macOS 가 이 번들을 알림 대상으로 인정하지 않을 때. 실측한 원인은 두 가지였다:
     /// 손으로 조립한 번들(Xcode 빌드가 아님), 그리고 실패 이력이 각인된 번들 ID.

@@ -110,10 +110,12 @@ Everything is in the panel:
 
 | Control | What it does |
 |---|---|
+| **Show in the menu bar** | Either the one limit closest to running out, or all three side by side. Each option previews itself using your live numbers, so you can see what you'd get before picking. |
+| **Refresh every** | 2 / 5 / 15 / 30 minutes. Each refresh actually loads the vendor pages, so shorter isn't free. Changing it refreshes immediately. |
 | **Launch at login** | Starts the app automatically. On by default. Turn it off and it stays off. |
 | **Notify when near limit** | A notification at 80% and again at 95% of any limit. |
 | **Refresh** | Re-reads everything right now. Takes a few seconds; shows progress. |
-| **↗** (next to a provider) | Opens that vendor's usage page in your real browser, so you can check the app against the source. |
+| **Clicking a provider's numbers** | Opens that vendor's usage page in your real browser, so you can check the app against the source. The ↗ marks it. |
 | **Quit** | Exits. |
 
 ---
@@ -148,11 +150,13 @@ it becomes a filled triangle. This needs no permission and works in every build.
 
 | | Windows | Source | Refresh |
 |---|---|---|---|
-| **Claude** | 5-hour · weekly · weekly per-model | `claude.ai/settings/usage` (hidden web view) | 5 min |
+| **Claude** | 5-hour · weekly · weekly per-model | `claude.ai/settings/usage` (hidden web view) | 5 min¹ |
 | | *fallback* | `cachedUsageUtilization` in `~/.claude.json` | only when you run `/usage` |
 | **Codex** | 5-hour · weekly | `chatgpt.com/codex/.../analytics#usage` (hidden web view) | 5 min |
 | | *fallback* | `rate_limits` in `~/.codex/sessions/**/*.jsonl` | whenever you use Codex |
 | **Gemini** | current · weekly | `gemini.google.com/usage` (hidden web view) | 5 min |
+
+¹ Adjustable in the panel.
 
 Provider icons come from the apps installed on your Mac (Claude.app, ChatGPT.app, Gemini.app)
 via `NSWorkspace` — no bundled logo images. If an app isn't installed you get a short label

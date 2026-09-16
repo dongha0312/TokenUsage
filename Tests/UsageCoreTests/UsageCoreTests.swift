@@ -903,3 +903,60 @@ final class MenuBarSelectionTests: XCTestCase {
         XCTAssertNil(mostUrgent(among: [.unavailable(.claude, "x")]))
     }
 }
+
+// MARK: - 메뉴바 표시 방식 · 갱신 주기
+
+final class MenuBarStyleTests: XCTestCase {
+    private func usage(_ p: Provider, session: Double?, weekly: Double?) -> ProviderUsage {
+        var windows: [UsageWindow] = []
+        if let session { windows.append(UsageWindow(kind: .session(hours: 5), usedPercent: session, resetsAt: nil)) }
+        if let weekly { windows.append(UsageWindow(kind: .weekly, usedPercent: weekly, resetsAt: nil)) }
+        return ProviderUsage(provider: p, windows: windows, updatedAt: Date())
+    }
+
+    func testAllModeListsEveryProviderInOrder() {
+        let entries = menuBarEntries(for: [
+            usage(.claude, session: 23, weekly: 9),
+            usage(.codex, session: 2, weekly: 45),
+            usage(.gemini, session: 0, weekly: 0),
+        ])
+        XCTAssertEqual(entries.map(\.provider), [.claude, .codex, .gemini])
+        XCTAssertEqual(entries.map(\.text), ["23%", "2%", "0%"])
+    }
+
+    /// 제공자 안에서도 세션을 우선한다. 전체 규칙과 어긋나면 숫자가 서로 안 맞아 보인다.
+    func testAllModePrefersSessionWithinProvider() {
+        let entries = menuBarEntries(for: [usage(.codex, session: 2, weekly: 45)])
+        XCTAssertEqual(entries.first?.text, "2%", "주간 45% 가 아니라 세션 2% 여야 한다")
+    }
+
+    /// 세션 창이 없는 제공자는 가진 것 중 최대를 쓴다.
+    func testAllModeFallsBackWhenNoSession() {
+        XCTAssertEqual(menuBarEntries(for: [usage(.gemini, session: nil, weekly: 30)]).first?.text, "30%")
+    }
+
+    /// 수치가 없는 제공자는 아예 빠진다. "—" 같은 자리만 차지하는 항목을 만들지 않는다.
+    func testAllModeSkipsProvidersWithoutNumbers() {
+        let entries = menuBarEntries(for: [
+            .unavailable(.gemini, "로그인 필요"),
+            usage(.claude, session: 5, weekly: nil),
+        ])
+        XCTAssertEqual(entries.map(\.provider), [.claude])
+    }
+
+    func testRefreshIntervalRoundTripsThroughRawValue() {
+        for interval in RefreshInterval.allCases {
+            XCTAssertEqual(RefreshInterval(rawValue: interval.rawValue), interval)
+        }
+        // 저장된 값이 깨졌거나 비어 있으면 기본값으로 떨어져야 한다.
+        XCTAssertNil(RefreshInterval(rawValue: 0))
+        XCTAssertNil(RefreshInterval(rawValue: 7))
+    }
+
+    func testMenuBarStyleRoundTrips() {
+        for style in MenuBarStyle.allCases {
+            XCTAssertEqual(MenuBarStyle(rawValue: style.rawValue), style)
+        }
+        XCTAssertNil(MenuBarStyle(rawValue: "nope"))
+    }
+}

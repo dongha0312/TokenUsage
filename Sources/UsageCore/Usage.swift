@@ -171,3 +171,36 @@ public func fillingMissingResets(_ windows: [UsageWindow],
         return UsageWindow(kind: window.kind, usedPercent: window.usedPercent, resetsAt: resetsAt)
     }
 }
+
+/// 메뉴바에 뭘 띄울지.
+public enum MenuBarStyle: String, CaseIterable, Sendable {
+    /// 가장 급한 것 하나. 세션 창 기준이고, 주간은 위험할 때만 올라온다.
+    case urgent
+    /// 세 제공자를 모두 나란히.
+    case all
+}
+
+/// `.all` 모드에서 제공자별로 보여줄 항목. 아이콘은 호출하는 쪽이 붙인다.
+public func menuBarEntries(for usages: [ProviderUsage]) -> [(provider: Provider, text: String)] {
+    usages.compactMap { usage in
+        // 제공자 안에서도 세션을 우선한다. 메뉴바 전체 규칙과 같아야 헷갈리지 않는다.
+        let sessions = usage.windows.filter { $0.kind.isSession && $0.usedPercent != nil }
+        let pool = sessions.isEmpty
+            ? usage.windows.filter { $0.usedPercent != nil }
+            : sessions
+        guard let window = pool.max(by: { ($0.usedPercent ?? 0) < ($1.usedPercent ?? 0) }),
+              let used = window.usedPercent else { return nil }
+        return (usage.provider, "\(Int(used.rounded()))%")
+    }
+}
+
+/// 갱신 주기 선택지. 웹뷰가 벤더 페이지를 실제로 여는 작업이라 너무 짧게 두지 않는다.
+public enum RefreshInterval: Int, CaseIterable, Sendable {
+    case twoMinutes = 2
+    case fiveMinutes = 5
+    case fifteenMinutes = 15
+    case thirtyMinutes = 30
+
+    public var minutes: Int { rawValue }
+    public var label: String { L10n.minutes(rawValue) }
+}
