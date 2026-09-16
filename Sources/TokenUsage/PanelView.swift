@@ -244,24 +244,9 @@ private struct MenuBarChoice: View {
                 .font(.system(size: 11))
                 .foregroundStyle(selected ? Color.accentColor : Color.secondary)
 
-            // 메뉴바에 실제로 들어갈 내용과 같은 구성으로 그린다.
+            // 메뉴바에 실제로 들어갈 뷰를 그대로 쓴다.
             HStack(spacing: 3) {
-                switch style {
-                case .urgent:
-                    if let provider = model.menuBarProvider {
-                        ProviderIcon(provider: provider, size: 13)
-                    }
-                    Text(model.menuBarText)
-                case .all:
-                    if model.menuBarEntries.isEmpty {
-                        Text("—")
-                    } else {
-                        ForEach(model.menuBarEntries, id: \.provider) { entry in
-                            ProviderIcon(provider: entry.provider, size: 13)
-                            Text(entry.text).padding(.trailing, 3)
-                        }
-                    }
-                }
+                MenuBarLabel(model: model, style: style, iconSize: 13)
             }
             .font(.system(size: 11))
 

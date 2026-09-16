@@ -45,6 +45,13 @@ final class UsageModel: ObservableObject {
 
     init() { start() }
 
+    /// 부작용 없이 만드는 경로. 스냅샷 렌더와 SwiftUI 미리보기에서 쓴다.
+    /// 갱신 루프도, 로그인 항목 등록도, 알림 권한 요청도 하지 않는다.
+    init(sample usages: [ProviderUsage]) {
+        self.usages = usages
+        started = true
+    }
+
     private func start() {
         guard !started else { return }
         started = true
@@ -198,6 +205,9 @@ final class UsageModel: ObservableObject {
         // 더 짧게 바꿨으면 다음 회차를 기다리지 않고 바로 반영해준다.
         Task { await refreshWeb() }
     }
+
+    /// 저장하지 않고 표시 방식만 바꾼다. 스냅샷 렌더처럼 설정을 건드리면 안 되는 경우에 쓴다.
+    func setMenuBarStyleWithoutSaving(_ style: MenuBarStyle) { menuBarStyle = style }
 
     func setMenuBarStyle(_ style: MenuBarStyle) {
         menuBarStyle = style

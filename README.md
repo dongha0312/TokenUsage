@@ -1,30 +1,43 @@
+<div align="center">
+
+<img src="docs/icon.png" width="128" alt="TokenUsage">
+
 # TokenUsage
 
-A macOS menu bar app that shows how much of your **Claude**, **Codex (ChatGPT)** and
-**Gemini** subscription you have used, and when each limit resets.
+**Your Claude, Codex and Gemini limits — in the menu bar, always current.**
 
-Collapsed, it shows the **5-hour limit** closest to running out — the one that can actually
-block you right now. A weekly limit only takes over the menu bar once it passes 80%:
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey)
+![Swift](https://img.shields.io/badge/Swift-5.9-orange)
+![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
+![Tests](https://img.shields.io/badge/tests-91-brightgreen)
 
-```
-[icon] 45% · 2d
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/panel-dark.png">
+  <img src="docs/panel-light.png" width="330" alt="The TokenUsage panel">
+</picture>
 
-Click it for the full panel:
+</div>
 
-```
-[icon] Claude                             PLAN  ↗
-5-hour limit                   34% · resets in 3h
-▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-Weekly · all models            12% · resets in 3d
-▇▇▇▇▇░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-Weekly · <model>                3% · resets in 3d
-▇░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                 updated just now
-```
+---
 
-Every number comes from the vendor's own usage page. Nothing is estimated.
-The UI follows your system language (English and Korean).
+Collapsed, the menu bar shows the **5-hour limit** closest to running out — the one that can
+actually block you right now:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-dark.png">
+  <img src="docs/menubar-urgent-light.png" width="146" alt="Menu bar showing the most urgent limit">
+</picture>
+
+Or all three at once, if you'd rather see everything:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-all-dark.png">
+  <img src="docs/menubar-all-light.png" width="181" alt="Menu bar showing all three services">
+</picture>
+
+Every number comes from the vendor's own usage page. **Nothing is estimated.** The UI follows
+your system language (English and Korean).
 
 ---
 
@@ -89,18 +102,19 @@ Click the menu bar item. At the bottom of the panel you'll see:
 Live data — sign in:  Claude  Codex  Gemini
 ```
 
-Click each name. A window opens with that vendor's usage page. Sign in there.
+Click each name, sign in the window that opens, and it closes itself when it succeeds. Names
+disappear from that line as each one connects.
 
-- The names disappear from that line as each one succeeds.
-- Within 5 minutes (or click **Refresh**) the numbers fill in.
-- **You only do this once.** The app keeps its own cookies and remembers you across restarts
-  and rebuilds.
+**You do this once.** The app keeps its own cookies and remembers you across restarts and
+rebuilds.
 
+> [!TIP]
 > **Signing in with Google?** Google blocks its OAuth flow inside embedded web views. If you
 > see "This browser or app may not be secure", use the **email + verification code** option
-> instead. Same account, and it works in a web view.
+> instead — same account, and it works.
 
-> **Why can't it use my browser's login?** The app's web views have their own cookie store,
+> [!NOTE]
+> **It can't reuse your browser's login.** The app's web views have their own cookie store,
 > separate from Chrome or Safari. Reading your browser's cookies would mean touching your
 > credentials directly, which this app deliberately never does.
 
@@ -289,4 +303,8 @@ translations beyond English and Korean (see `Sources/UsageCore/L10n.swift`).
 
 MIT — see [LICENSE](LICENSE).
 
-한국어 설명은 [README.ko.md](README.ko.md)에 있습니다.
+<div align="center">
+
+**[한국어 설명서](README.ko.md)**
+
+</div>

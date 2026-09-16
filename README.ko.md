@@ -1,26 +1,40 @@
+<div align="center">
+
+<img src="docs/icon.png" width="128" alt="TokenUsage">
+
 # TokenUsage
 
-**Claude · Codex(ChatGPT) · Gemini** 구독 사용량과 초기화 시각을 macOS 메뉴바에 띄우는 앱.
+**Claude · Codex · Gemini 한도를 메뉴바에서 항상 최신으로.**
 
-접힌 상태에서는 **5시간 한도** 중 가장 많이 쓴 것을 보여줍니다 — 지금 당장 나를 막는 건
-그쪽이기 때문입니다. 주간 한도는 80%를 넘어야 메뉴바로 올라옵니다.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey)
+![Swift](https://img.shields.io/badge/Swift-5.9-orange)
+![Dependencies](https://img.shields.io/badge/의존성-없음-brightgreen)
+![Tests](https://img.shields.io/badge/테스트-91개-brightgreen)
 
-```
-[아이콘] 45% · 2일
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/panel-dark.png">
+  <img src="docs/panel-light.png" width="330" alt="TokenUsage 패널">
+</picture>
 
-클릭하면 전체 패널이 열립니다.
+</div>
 
-```
-[아이콘] Claude                             PLAN  ↗
-5시간 한도                     34% · 3시간 후 초기화
-▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-주간 · 모든 모델               12% · 3일 후 초기화
-▇▇▇▇▇░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-주간 · <모델>                   3% · 3일 후 초기화
-▇░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                   방금 업데이트됨
-```
+---
+
+접힌 상태에서는 **5시간 한도** 중 가장 많이 쓴 것을 보여줍니다. 지금 당장 나를 막는 건
+그쪽이기 때문입니다.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-dark.png">
+  <img src="docs/menubar-urgent-light.png" width="146" alt="가장 급한 한도를 표시한 메뉴바">
+</picture>
+
+세 서비스를 한 번에 보고 싶으면 이렇게도 됩니다.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-all-dark.png">
+  <img src="docs/menubar-all-light.png" width="181" alt="세 서비스를 모두 표시한 메뉴바">
+</picture>
 
 모든 수치는 각 벤더의 사용량 페이지에서 그대로 가져옵니다. **추정값이 없습니다.**
 UI는 시스템 언어를 따릅니다(한국어·영어).
@@ -243,7 +257,7 @@ ClaudeReader 290줄 → 127줄, 테스트 22초 → 0.05초.
 ## 개발
 
 ```sh
-swift test           # 80개
+swift test                                  # 91개
 open Package.swift   # SwiftPM으로 Xcode에서 열기
 ```
 
@@ -256,3 +270,9 @@ open Package.swift   # SwiftPM으로 Xcode에서 열기
 ## 라이선스
 
 MIT — [LICENSE](LICENSE) 참고.
+
+<div align="center">
+
+**[English README](README.md)**
+
+</div>
