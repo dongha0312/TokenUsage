@@ -13,8 +13,8 @@
 ![Tests](https://img.shields.io/badge/테스트-91개-brightgreen)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/panel-dark.png">
-  <img src="docs/panel-light.png" width="330" alt="TokenUsage 패널">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/panel-ko-dark.png">
+  <img src="docs/panel-ko-light.png" width="330" alt="TokenUsage 패널">
 </picture>
 
 </div>
@@ -25,15 +25,15 @@
 그쪽이기 때문입니다.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-dark.png">
-  <img src="docs/menubar-urgent-light.png" width="146" alt="가장 급한 한도를 표시한 메뉴바">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-ko-dark.png">
+  <img src="docs/menubar-urgent-ko-light.png" width="146" alt="가장 급한 한도를 표시한 메뉴바">
 </picture>
 
 세 서비스를 한 번에 보고 싶으면 이렇게도 됩니다.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-all-dark.png">
-  <img src="docs/menubar-all-light.png" width="181" alt="세 서비스를 모두 표시한 메뉴바">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-all-ko-dark.png">
+  <img src="docs/menubar-all-ko-light.png" width="181" alt="세 서비스를 모두 표시한 메뉴바">
 </picture>
 
 모든 수치는 각 벤더의 사용량 페이지에서 그대로 가져옵니다. **추정값이 없습니다.**

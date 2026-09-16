@@ -29,14 +29,24 @@ enum Snapshot {
         app.run()   // SwiftUI 앱 대신 여기서 끝난다
     }
 
+    /// 언어와 명암 모드 조합으로 전부 만든다.
+    ///
+    /// 문서가 영어인데 스크린샷만 한국어면 읽는 사람이 자기가 볼 화면을 알 수 없다.
+    /// UI 문자열은 `L10n.isKorean` 하나로 갈리므로 렌더 직전에 바꿔주면 된다.
     private static func captureAll(into dir: String) {
-        for (appearance, suffix) in [(NSAppearance(named: .darkAqua), "dark"),
-                                     (NSAppearance(named: .aqua), "light")] {
-            capture(PanelView(model: sampleModel()), appearance: appearance,
-                    to: "\(dir)/panel-\(suffix).png")
-            for style in MenuBarStyle.allCases {
-                capture(menuBarStrip(style: style), appearance: appearance,
-                        to: "\(dir)/menubar-\(style.rawValue)-\(suffix).png")
+        let original = L10n.isKorean
+        defer { L10n.isKorean = original }
+
+        for (korean, lang) in [(false, "en"), (true, "ko")] {
+            L10n.isKorean = korean
+            for (appearance, mode) in [(NSAppearance(named: .darkAqua), "dark"),
+                                       (NSAppearance(named: .aqua), "light")] {
+                capture(PanelView(model: sampleModel()), appearance: appearance,
+                        to: "\(dir)/panel-\(lang)-\(mode).png")
+                for style in MenuBarStyle.allCases {
+                    capture(menuBarStrip(style: style), appearance: appearance,
+                            to: "\(dir)/menubar-\(style.rawValue)-\(lang)-\(mode).png")
+                }
             }
         }
     }

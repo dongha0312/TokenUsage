@@ -13,8 +13,8 @@
 ![Tests](https://img.shields.io/badge/tests-91-brightgreen)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/panel-dark.png">
-  <img src="docs/panel-light.png" width="330" alt="The TokenUsage panel">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/panel-en-dark.png">
+  <img src="docs/panel-en-light.png" width="330" alt="The TokenUsage panel">
 </picture>
 
 </div>
@@ -25,15 +25,15 @@ Collapsed, the menu bar shows the **5-hour limit** closest to running out — th
 actually block you right now:
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-dark.png">
-  <img src="docs/menubar-urgent-light.png" width="146" alt="Menu bar showing the most urgent limit">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-en-dark.png">
+  <img src="docs/menubar-urgent-en-light.png" width="146" alt="Menu bar showing the most urgent limit">
 </picture>
 
 Or all three at once, if you'd rather see everything:
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-all-dark.png">
-  <img src="docs/menubar-all-light.png" width="181" alt="Menu bar showing all three services">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-all-en-dark.png">
+  <img src="docs/menubar-all-en-light.png" width="181" alt="Menu bar showing all three services">
 </picture>
 
 Every number comes from the vendor's own usage page. **Nothing is estimated.** The UI follows
