@@ -24,7 +24,7 @@ sample of the page text is enough for me to add it — see the issue template.
 ```sh
 git clone https://github.com/dongha0312/TokenUsage.git
 cd TokenUsage
-swift test          # 91 tests, no signing needed
+swift test          # 92 tests, no signing needed
 ./build.sh --install
 ```
 

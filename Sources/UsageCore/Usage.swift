@@ -137,13 +137,18 @@ public func mostUrgent(among usages: [ProviderUsage]) -> (ProviderUsage, UsageWi
     return pool.max { ($0.1.usedPercent ?? 0) < ($1.1.usedPercent ?? 0) }
 }
 
+/// 메뉴바에 올릴 남은 비율. 패널은 사용한 비율을 보여주므로, 반올림한 사용량에서 빼야
+/// 두 숫자의 합이 정확히 100이 된다 (33.5% 사용 → 패널 34%, 메뉴바 66%).
+func remainingText(_ used: Double) -> String { "\(100 - Int(used.rounded()))%" }
+
 /// 메뉴바 한 줄에 들어갈 텍스트. 아이콘은 호출하는 쪽이 붙인다.
+/// 고르는 기준은 여전히 "가장 많이 쓴 것"이고, 보여주는 숫자만 남은 비율이다.
 public func menuBarText(for usages: [ProviderUsage], now: Date = Date()) -> String {
     guard let (_, window) = mostUrgent(among: usages),
           let used = window.usedPercent else { return "—" }
-    let pct = Int(used.rounded())
-    if let t = window.timeToReset(now: now) { return "\(pct)% · \(t)" }
-    return "\(pct)%"
+    let pct = remainingText(used)
+    if let t = window.timeToReset(now: now) { return "\(pct) · \(t)" }
+    return pct
 }
 
 /// "14분 전에 업데이트됨" / "updated 14m ago"
@@ -190,7 +195,7 @@ public func menuBarEntries(for usages: [ProviderUsage]) -> [(provider: Provider,
             : sessions
         guard let window = pool.max(by: { ($0.usedPercent ?? 0) < ($1.usedPercent ?? 0) }),
               let used = window.usedPercent else { return nil }
-        return (usage.provider, "\(Int(used.rounded()))%")
+        return (usage.provider, remainingText(used))
     }
 }
 

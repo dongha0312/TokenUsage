@@ -10,7 +10,7 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![Dependencies](https://img.shields.io/badge/의존성-없음-brightgreen)
-![Tests](https://img.shields.io/badge/테스트-91개-brightgreen)
+![Tests](https://img.shields.io/badge/테스트-92개-brightgreen)
 [![CI](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml/badge.svg)](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml)
 
 <picture>
@@ -22,8 +22,8 @@
 
 ---
 
-접힌 상태에서는 **5시간 한도** 중 가장 많이 쓴 것을 보여줍니다. 지금 당장 나를 막는 건
-그쪽이기 때문입니다.
+접힌 상태에서는 **5시간 한도** 중 가장 많이 쓴 것의 **남은 비율**을 보여줍니다. 지금 당장
+나를 막는 건 그쪽이기 때문입니다.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-ko-dark.png">
@@ -229,8 +229,10 @@ cat /tmp/tokenusage-debug.log
 만들면서 틀렸던 것과 그걸 어떻게 알았는지는 **[DEVLOG.md](DEVLOG.md)** 에 정리해뒀습니다.
 아래는 요약입니다.
 
-### 비율은 "남은 양"이 아니라 "사용한 양"
-세 벤더 모두 사용량 기준으로 보고합니다. 뒤집으면 벤더 화면과 대조할 때마다 헷갈립니다.
+### 패널은 "사용한 양", 메뉴바는 "남은 양"
+세 벤더 모두 사용량 기준으로 보고하므로 패널은 그 방향 그대로 둬서 벤더 화면과 바로 대조됩니다.
+메뉴바는 흘끗 보는 자리라 "얼마나 남았나"를 보여줍니다. 패널의 반올림한 숫자에서 빼므로 두 값의
+합은 항상 100입니다.
 
 ### 굳은 수치를 현재값인 양 보여주지 않는다
 모든 출처가 "어느 시점의 스냅샷"입니다. 그래서 리셋이 지난 창은 비우고, 제공자마다 언제
@@ -264,7 +266,7 @@ ClaudeReader 290줄 → 127줄, 테스트 22초 → 0.05초.
 ## 개발
 
 ```sh
-swift test                                  # 91개
+swift test                                  # 92개
 open Package.swift   # SwiftPM으로 Xcode에서 열기
 ```
 

@@ -341,14 +341,23 @@ final class DisplayTests: LocalizedTestCase {
         XCTAssertEqual(menuBarText(for: [unknown]), "—")
     }
 
-    func testMenuBarShowsUsedNotRemaining() {
+    func testMenuBarShowsRemainingNotUsed() {
         let now = date(2026, 9, 16, 17, 0)
         let u = ProviderUsage(
             provider: .claude,
             windows: [UsageWindow(kind: .session(hours: 5), usedPercent: 11,
                                   resetsAt: now.addingTimeInterval(3 * 3600 + 600))],
             updatedAt: now)
-        XCTAssertEqual(menuBarText(for: [u], now: now), "11% · 3시간")
+        XCTAssertEqual(menuBarText(for: [u], now: now), "89% · 3시간")
+    }
+
+    /// 패널의 사용 비율과 합이 100이어야 한다. 33.5를 따로 반올림하면 34 + 67 = 101이 된다.
+    func testRemainingAddsUpWithPanel() {
+        let u = ProviderUsage(
+            provider: .claude,
+            windows: [UsageWindow(kind: .session(hours: 5), usedPercent: 33.5, resetsAt: nil)],
+            updatedAt: Date())
+        XCTAssertEqual(menuBarText(for: [u]), "66%")
     }
 
     func testAllUnavailableGivesDash() {
@@ -926,18 +935,18 @@ final class MenuBarStyleTests: LocalizedTestCase {
             usage(.gemini, session: 0, weekly: 0),
         ])
         XCTAssertEqual(entries.map(\.provider), [.claude, .codex, .gemini])
-        XCTAssertEqual(entries.map(\.text), ["23%", "2%", "0%"])
+        XCTAssertEqual(entries.map(\.text), ["77%", "98%", "100%"])
     }
 
     /// 제공자 안에서도 세션을 우선한다. 전체 규칙과 어긋나면 숫자가 서로 안 맞아 보인다.
     func testAllModePrefersSessionWithinProvider() {
         let entries = menuBarEntries(for: [usage(.codex, session: 2, weekly: 45)])
-        XCTAssertEqual(entries.first?.text, "2%", "주간 45% 가 아니라 세션 2% 여야 한다")
+        XCTAssertEqual(entries.first?.text, "98%", "주간 45% 가 아니라 세션 2% 여야 한다")
     }
 
     /// 세션 창이 없는 제공자는 가진 것 중 최대를 쓴다.
     func testAllModeFallsBackWhenNoSession() {
-        XCTAssertEqual(menuBarEntries(for: [usage(.gemini, session: nil, weekly: 30)]).first?.text, "30%")
+        XCTAssertEqual(menuBarEntries(for: [usage(.gemini, session: nil, weekly: 30)]).first?.text, "70%")
     }
 
     /// 수치가 없는 제공자는 아예 빠진다. "—" 같은 자리만 차지하는 항목을 만들지 않는다.

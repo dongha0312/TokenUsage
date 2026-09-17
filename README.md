@@ -10,7 +10,7 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
-![Tests](https://img.shields.io/badge/tests-91-brightgreen)
+![Tests](https://img.shields.io/badge/tests-92-brightgreen)
 [![CI](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml/badge.svg)](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml)
 
 <picture>
@@ -22,8 +22,8 @@
 
 ---
 
-Collapsed, the menu bar shows the **5-hour limit** closest to running out — the one that can
-actually block you right now:
+Collapsed, the menu bar shows **how much is left** on the **5-hour limit** closest to running
+out — the one that can actually block you right now:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-en-dark.png">
@@ -232,10 +232,12 @@ plus a snippet of what rendered. Writes nothing when the variable is unset.
 
 ## Design notes
 
-### Percentages are "used", not "left"
+### The panel shows "used", the menu bar shows "left"
 
-All three vendors report how much you have *used*. Flipping it would make every comparison
-against the vendor's own screen confusing.
+All three vendors report how much you have *used*, so the panel keeps that direction and lines
+up with their own screens. The menu bar is a glance, and "how much do I have left" is the
+question a glance answers — so it shows `100 − used`, subtracting from the panel's rounded
+number so the two always add up to 100.
 
 ### It never shows a stale number as if it were current
 
