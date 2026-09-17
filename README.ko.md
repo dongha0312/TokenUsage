@@ -10,7 +10,7 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![Dependencies](https://img.shields.io/badge/의존성-없음-brightgreen)
-![Tests](https://img.shields.io/badge/테스트-92개-brightgreen)
+![Tests](https://img.shields.io/badge/테스트-93개-brightgreen)
 [![CI](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml/badge.svg)](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml)
 
 <picture>
@@ -181,7 +181,9 @@ TEAM_ID=팀ID ./build.sh --install
 - 실시간 값은 숨은 `WKWebView` 가 벤더의 사용량 페이지를 띄워서 읽습니다.
   앱 안에서 로그인하고, 웹뷰가 자기 쿠키를 갖습니다. 앱은 렌더된 텍스트만 읽습니다.
 
-수집·전송하는 데이터가 없습니다. 네트워크는 저 세 페이지를 여는 것뿐입니다.
+수집·전송하는 데이터가 없습니다. 그 밖의 네트워크는 새 버전이 나왔는지 보려고 하루 한 번
+GitHub 공개 릴리스 API를 조회하는 것뿐이고, 내 정보는 아무것도 보내지 않습니다. 새 버전이
+있으면 패널에 받기 링크가 뜨고 알림이 한 번 옵니다. 저절로 설치되지는 않습니다.
 
 ---
 
@@ -266,7 +268,7 @@ ClaudeReader 290줄 → 127줄, 테스트 22초 → 0.05초.
 ## 개발
 
 ```sh
-swift test                                  # 92개
+swift test                                  # 93개
 open Package.swift   # SwiftPM으로 Xcode에서 열기
 ```
 

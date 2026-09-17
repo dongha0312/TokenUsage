@@ -199,6 +199,24 @@ public func menuBarEntries(for usages: [ProviderUsage]) -> [(provider: Provider,
     }
 }
 
+/// `candidate` 가 `current` 보다 새 버전인가. 태그의 "v" 는 무시하고, 자리 수가 달라도
+/// 빈 자리는 0으로 본다 ("1.1" == "v1.1.0").
+///
+/// 문자열 비교는 "1.10" < "1.9" 로 틀리고, `.numeric` 비교도 "1.1.0" > "1.1" 로 틀린다.
+/// 후자면 최신 버전을 쓰는 사람에게 업데이트가 있다고 뜬다.
+public func isNewerVersion(_ candidate: String, than current: String) -> Bool {
+    func parts(_ s: String) -> [Int] {
+        s.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+         .split(separator: ".").map { Int($0) ?? 0 }
+    }
+    let a = parts(candidate), b = parts(current)
+    for i in 0..<max(a.count, b.count) {
+        let x = i < a.count ? a[i] : 0, y = i < b.count ? b[i] : 0
+        if x != y { return x > y }
+    }
+    return false
+}
+
 /// 갱신 주기 선택지. 웹뷰가 벤더 페이지를 실제로 여는 작업이라 너무 짧게 두지 않는다.
 public enum RefreshInterval: Int, CaseIterable, Sendable {
     case twoMinutes = 2

@@ -68,6 +68,18 @@ public enum L10n {
     public static var noSessionLogs: String { pick("세션 로그 없음", "no session logs") }
     public static var noUsageRecord: String { pick("사용량 기록 없음", "no usage records") }
 
+    // MARK: - 업데이트
+
+    public static func downloadVersion(_ version: String) -> String {
+        pick("새 버전 \(version) 받기", "Download version \(version)")
+    }
+    public static func updateTitle(_ version: String) -> String {
+        pick("TokenUsage \(version) 출시", "TokenUsage \(version) is available")
+    }
+    public static var updateBody: String {
+        pick("메뉴바 패널에서 받을 수 있습니다.", "Download it from the menu bar panel.")
+    }
+
     // MARK: - UI
 
     public static var refresh: String { pick("새로 고침", "Refresh") }

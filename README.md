@@ -10,7 +10,7 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
-![Tests](https://img.shields.io/badge/tests-92-brightgreen)
+![Tests](https://img.shields.io/badge/tests-93-brightgreen)
 [![CI](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml/badge.svg)](https://github.com/dongha0312/TokenUsage/actions/workflows/ci.yml)
 
 <picture>
@@ -186,7 +186,9 @@ no server of its own.
 - For live data, a hidden `WKWebView` loads the vendor's own usage page. You sign in inside the
   app; the web view keeps its own cookies. The app reads only the rendered text.
 
-No telemetry. The only network traffic is loading those three pages.
+No telemetry. The only other network traffic is one request a day to GitHub's public releases
+API, to see whether a newer version is out. It sends nothing about you. If there is one, the
+panel shows a download link and you get a single notification — nothing installs itself.
 
 ---
 

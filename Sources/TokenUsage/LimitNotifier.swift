@@ -61,6 +61,18 @@ final class LimitNotifier {
         UsageModel.debug("확인 알림 발송")
     }
 
+    /// 새 버전 안내. 권한이 없어 못 보냈으면 false — 호출하는 쪽이 다음 확인 때 다시 시도한다.
+    func sendUpdateAvailable(_ version: String) -> Bool {
+        guard authorized else { return false }
+        let content = UNMutableNotificationContent()
+        content.title = L10n.updateTitle(version)
+        content.body = L10n.updateBody
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
+        UsageModel.debug("업데이트 알림 발송: \(version)")
+        return true
+    }
+
     /// 사용자가 알림을 껐다 켜면 직전 상태 때문에 조용해지지 않도록 기록을 비운다.
     func reset() {
         lastNotified.removeAll()

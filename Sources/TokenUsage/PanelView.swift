@@ -25,6 +25,14 @@ struct PanelView: View {
 
     private var footer: some View {
         VStack(alignment: .leading, spacing: 6) {
+            if let update = model.update {
+                Button { NSWorkspace.shared.open(update.url) } label: {
+                    Label(L10n.downloadVersion(update.version), systemImage: "arrow.down.circle.fill")
+                }
+                .buttonStyle(.link)
+                .padding(.bottom, 4)
+            }
+
             Toggle(L10n.launchAtLogin, isOn: Binding(
                 get: { model.loginItemEnabled },
                 set: { model.setLoginItem($0) }))

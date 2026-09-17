@@ -958,6 +958,16 @@ final class MenuBarStyleTests: LocalizedTestCase {
         XCTAssertEqual(entries.map(\.provider), [.claude])
     }
 
+    /// 틀리면 최신 버전 사용자에게 업데이트가 뜨거나, 진짜 업데이트를 놓친다.
+    func testVersionComparison() {
+        XCTAssertTrue(isNewerVersion("v1.1.0", than: "1.0"))
+        XCTAssertTrue(isNewerVersion("v1.10.0", than: "1.9.0"), "문자열 비교면 틀린다")
+        XCTAssertTrue(isNewerVersion("v2.0", than: "1.99.99"))
+        XCTAssertFalse(isNewerVersion("v1.1.0", than: "1.1"), "자리 수만 다른 같은 버전")
+        XCTAssertFalse(isNewerVersion("v1.0.0", than: "1.1.0"))
+        XCTAssertFalse(isNewerVersion("v1.1.0", than: "1.1.0"))
+    }
+
     func testRefreshIntervalRoundTripsThroughRawValue() {
         for interval in RefreshInterval.allCases {
             XCTAssertEqual(RefreshInterval(rawValue: interval.rawValue), interval)

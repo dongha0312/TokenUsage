@@ -72,6 +72,43 @@ final class UsageModel: ObservableObject {
         Task { await loop({ self.localInterval }) { await self.refreshLocal() } }
         // 주기는 설정에서 바뀔 수 있으므로 매 회차에 다시 읽는다.
         Task { await loop({ .seconds(self.refreshInterval.minutes * 60) }) { await self.refreshWeb() } }
+        // 알림 권한 요청(3초 뒤)보다 늦게 시작한다. 먼저 돌면 권한 전이라 알림이 못 나간다.
+        Task {
+            try? await Task.sleep(for: .seconds(10))
+            await loop({ .seconds(24 * 3600) }) { await self.checkForUpdate() }
+        }
+    }
+
+    // MARK: - 업데이트 확인
+
+    /// 새 버전이 있으면 그 버전과 릴리스 페이지. 패널에 받기 링크로 뜬다.
+    @Published private(set) var update: (version: String, url: URL)?
+
+    private static let latestRelease =
+        URL(string: "https://api.github.com/repos/dongha0312/TokenUsage/releases/latest")!
+
+    /// GitHub 의 최신 릴리스를 본다. 받아서 설치까지 하지는 않는다 — 링크만 준다.
+    /// 알림은 버전마다 한 번. 하루마다 같은 알림이 오면 알림 자체를 꺼버리게 된다.
+    private func checkForUpdate() async {
+        // SwiftPM 으로 바로 실행하면 Info.plist 가 없다. 비교할 기준이 없으니 건너뛴다.
+        guard let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+              let data = (try? await URLSession.shared.data(from: Self.latestRelease))?.0,
+              let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let tag = json["tag_name"] as? String,
+              let page = (json["html_url"] as? String).flatMap(URL.init(string:)) else {
+            Self.debug("업데이트 확인 실패")
+            return
+        }
+        Self.debug("업데이트 확인: 최신 \(tag), 현재 \(current)")
+        guard isNewerVersion(tag, than: current) else { update = nil; return }
+
+        let version = String(tag.trimmingPrefix("v"))
+        update = (version, page)
+        let key = "notifiedUpdateVersion"
+        if UserDefaults.standard.string(forKey: key) != version,
+           notifyNearLimit, notifier.sendUpdateAvailable(version) {
+            UserDefaults.standard.set(version, forKey: key)
+        }
     }
 
     private func loop(_ every: @escaping () -> Duration,
