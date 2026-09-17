@@ -143,10 +143,11 @@ func remainingText(_ used: Double) -> String { "\(100 - Int(used.rounded()))%" }
 
 /// 메뉴바 한 줄에 들어갈 텍스트. 아이콘은 호출하는 쪽이 붙인다.
 /// 고르는 기준은 여전히 "가장 많이 쓴 것"이고, 보여주는 숫자만 남은 비율이다.
+/// `.all` 모드는 자리가 좁아 "남음" 을 빼고, 패널의 선택지 설명이 대신 밝힌다.
 public func menuBarText(for usages: [ProviderUsage], now: Date = Date()) -> String {
     guard let (_, window) = mostUrgent(among: usages),
           let used = window.usedPercent else { return "—" }
-    let pct = remainingText(used)
+    let pct = L10n.left(remainingText(used))
     if let t = window.timeToReset(now: now) { return "\(pct) · \(t)" }
     return pct
 }

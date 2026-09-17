@@ -27,7 +27,7 @@ out — the one that can actually block you right now:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-en-dark.png">
-  <img src="docs/menubar-urgent-en-light.png" width="146" alt="Menu bar showing the most urgent limit">
+  <img src="docs/menubar-urgent-en-light.png" width="168" alt="Menu bar showing the most urgent limit">
 </picture>
 
 Or all three at once, if you'd rather see everything:

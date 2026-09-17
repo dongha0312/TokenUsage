@@ -27,7 +27,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-urgent-ko-dark.png">
-  <img src="docs/menubar-urgent-ko-light.png" width="146" alt="가장 급한 한도를 표시한 메뉴바">
+  <img src="docs/menubar-urgent-ko-light.png" width="170" alt="가장 급한 한도를 표시한 메뉴바">
 </picture>
 
 세 서비스를 한 번에 보고 싶으면 이렇게도 됩니다.

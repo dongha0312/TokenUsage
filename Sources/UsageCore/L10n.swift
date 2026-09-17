@@ -100,7 +100,12 @@ public enum L10n {
         pick("한도에 가장 가까운 하나", "just the one closest to its limit")
     }
     public static var styleAllHint: String {
-        pick("세 서비스 전부", "all three services")
+        pick("세 서비스의 남은 비율", "what's left on all three")
+    }
+    /// 메뉴바 숫자가 남은 쪽이라는 표시. 1.0 은 같은 자리에 사용량을 띄웠으므로
+    /// 숫자만 두면 기존 사용자가 거꾸로 읽는다.
+    public static func left(_ percent: String) -> String {
+        pick("\(percent) 남음", "\(percent) left")
     }
     public static var refreshEvery: String { pick("갱신 주기", "Refresh every") }
     public static var refreshHint: String {

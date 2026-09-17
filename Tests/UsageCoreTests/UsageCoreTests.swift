@@ -348,7 +348,7 @@ final class DisplayTests: LocalizedTestCase {
             windows: [UsageWindow(kind: .session(hours: 5), usedPercent: 11,
                                   resetsAt: now.addingTimeInterval(3 * 3600 + 600))],
             updatedAt: now)
-        XCTAssertEqual(menuBarText(for: [u], now: now), "89% · 3시간")
+        XCTAssertEqual(menuBarText(for: [u], now: now), "89% 남음 · 3시간")
     }
 
     /// 패널의 사용 비율과 합이 100이어야 한다. 33.5를 따로 반올림하면 34 + 67 = 101이 된다.
@@ -357,7 +357,7 @@ final class DisplayTests: LocalizedTestCase {
             provider: .claude,
             windows: [UsageWindow(kind: .session(hours: 5), usedPercent: 33.5, resetsAt: nil)],
             updatedAt: Date())
-        XCTAssertEqual(menuBarText(for: [u]), "66%")
+        XCTAssertEqual(menuBarText(for: [u]), "66% 남음")
     }
 
     func testAllUnavailableGivesDash() {
