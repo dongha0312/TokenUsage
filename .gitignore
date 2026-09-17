@@ -7,3 +7,4 @@ dist/
 xcuserdata/
 *.xcuserstate
 Xcode/AppIcon.iconset/
+graphify-out/
