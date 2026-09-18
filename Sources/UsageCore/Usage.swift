@@ -126,6 +126,10 @@ public struct ProviderUsage: Sendable, Equatable {
 /// 많은 서비스가 제일 급한 것처럼 보인다.
 ///
 /// 다만 주간이 실제로 위험해지면(경고 이상) 숨기면 안 되므로 그때만 후보에 넣는다.
+///
+/// 다 쓴 창은 후보에서 뺀다. "0% 남음" 은 리셋될 때까지 몇 시간이고 그대로라 더 알려줄 게
+/// 없는데, 그게 제일 높은 값이라 아직 여유가 있는 다른 서비스를 계속 가린다.
+/// 전부 소진했을 때만 어쩔 수 없이 그대로 보여준다.
 public func mostUrgent(among usages: [ProviderUsage]) -> (ProviderUsage, UsageWindow)? {
     let all = usages.flatMap { usage in usage.windows.map { (usage, $0) } }
                     .filter { $0.1.usedPercent != nil }
@@ -134,7 +138,10 @@ public func mostUrgent(among usages: [ProviderUsage]) -> (ProviderUsage, UsageWi
 
     // 세션 창이 아예 없는 제공자만 있을 수도 있다. 그때는 전부를 후보로 둔다.
     let pool = sessions.isEmpty ? all : sessions + urgentOthers
-    return pool.max { ($0.1.usedPercent ?? 0) < ($1.1.usedPercent ?? 0) }
+    // 메뉴바에 찍히는 숫자(반올림) 기준이다. 99.6% 도 화면에는 "0% 남음" 이라 똑같이 죽은 값이다.
+    let withRoom = pool.filter { Int(($0.1.usedPercent ?? 0).rounded()) < 100 }
+    return (withRoom.isEmpty ? pool : withRoom)
+        .max { ($0.1.usedPercent ?? 0) < ($1.1.usedPercent ?? 0) }
 }
 
 /// 메뉴바에 올릴 남은 비율. 패널은 사용한 비율을 보여주므로, 반올림한 사용량에서 빼야

@@ -913,6 +913,40 @@ final class MenuBarSelectionTests: LocalizedTestCase {
         XCTAssertEqual(picked?.1.kind, .weekly)
     }
 
+    /// 실제로 겪은 상황: Codex 세션을 다 쓰자 메뉴바가 "0% 남음 · 4시간" 에 몇 시간이고
+    /// 붙박여서, 아직 94% 남은 Claude 가 보이지 않았다.
+    func testExhaustedSessionYieldsToOneWithRoom() {
+        let picked = mostUrgent(among: [
+            usage(.claude, session: 6, weekly: 13),
+            usage(.codex, session: 100, weekly: 62),
+            usage(.gemini, session: 0, weekly: 0),
+        ])
+        XCTAssertEqual(picked?.0.provider, .claude, "남은 세션이 있는 쪽으로 넘어가야 한다")
+        XCTAssertEqual(menuBarText(for: [
+            usage(.claude, session: 6, weekly: 13),
+            usage(.codex, session: 100, weekly: 62),
+        ]), "94% 남음")
+    }
+
+    /// 반올림해서 100% 면 화면에는 똑같이 "0% 남음" 이라 이것도 죽은 값이다.
+    func testNearlyExhaustedSessionAlsoYields() {
+        let picked = mostUrgent(among: [
+            usage(.claude, session: 6, weekly: nil),
+            usage(.codex, session: 99.7, weekly: nil),
+        ])
+        XCTAssertEqual(picked?.0.provider, .claude)
+    }
+
+    /// 전부 다 썼으면 넘겨줄 데가 없다. 숨기지 말고 그대로 보여준다.
+    func testAllExhaustedStillShowsSomething() {
+        let picked = mostUrgent(among: [
+            usage(.claude, session: 100, weekly: 100),
+            usage(.codex, session: 100, weekly: 100),
+        ])
+        XCTAssertNotNil(picked)
+        XCTAssertEqual(picked?.1.usedPercent ?? -1, 100, accuracy: 0.01)
+    }
+
     func testNothingUsableGivesNil() {
         XCTAssertNil(mostUrgent(among: [.unavailable(.claude, "x")]))
     }
