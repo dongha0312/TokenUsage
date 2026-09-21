@@ -64,9 +64,10 @@ struct ProviderIcon: View {
 
     var body: some View {
         if let icon = provider.icon(size: size) {
+            // resizable + frame 을 쓰면 메뉴바가 이 폭을 자기 칸 너비에 넣지 않아서
+            // 글자 끝이 옆 항목에 깔린다. NSImage 를 이미 그 크기로 줄여 두었으므로
+            // 원래 크기 그대로 두면 잰 폭과 그린 폭이 같아진다.
             Image(nsImage: icon)
-                .resizable()
-                .frame(width: size, height: size)
         } else {
             Text(provider.fallbackText)
                 .font(.system(size: size * 0.7, weight: .semibold))
