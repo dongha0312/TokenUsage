@@ -41,3 +41,39 @@ jobs:
           count=$(ls /tmp/shots/*.png | wc -l | tr -d ' ')
           echo "생성된 이미지: $count"
           [ "$count" -eq 12 ] || { echo "이미지 12장이 나와야 합니다"; exit 1; }
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Core checks
+        run: dotnet run --project windows/check
+
+      # 사용자가 .NET 을 따로 깔 필요 없게 런타임까지 한 파일에 넣는다.
+      - name: Build TokenUsage.exe
+        run: >
+          dotnet publish windows/TokenUsage.csproj -c Release -r win-x64 --self-contained
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true -o dist
+
+      # 배포할 그 exe 를 실제로 띄운다. 트레이, WebView2 초기화, 숨은 웹뷰로 늦게 그려지는
+      # 페이지 읽기, 세 벤더 페이지 조회(CI 에선 로그인 안 된 상태)까지 한 바퀴 돈다.
+      - name: Smoke test the exe
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          $log = Join-Path $pwd 'smoke.log'
+          $p = Start-Process -FilePath dist\TokenUsage.exe -ArgumentList '--smoke', $log -PassThru -Wait
+          Get-Content $log
+          exit $p.ExitCode
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TokenUsage-windows
+          path: dist/TokenUsage.exe
