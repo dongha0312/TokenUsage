@@ -134,6 +134,20 @@ TEAM_ID=팀ID ./build.sh --install
 
 ---
 
+## Windows
+
+Windows 판도 있습니다. 트레이 아이콘에 남은 비율 숫자를 그려 보여주고,
+아이콘을 누르면 모든 한도와 설정이 나옵니다.
+
+1. [Releases](https://github.com/dongha0312/TokenUsage/releases) 에서 `TokenUsage.exe` 를 받습니다.
+   런타임까지 한 파일에 들어 있어 .NET 을 따로 설치할 필요가 없습니다.
+2. 실행합니다. 코드 서명이 없어서 SmartScreen 이 막으면 **추가 정보 → 실행** 을 누르세요.
+3. 트레이 아이콘 → **Claude / Codex / Gemini 로그인** 을 한 번씩 하면 됩니다.
+
+Windows 10·11 이 필요하고, 이 버전들에 기본으로 깔려 있는 Microsoft Edge WebView2 런타임을 씁니다.
+수치는 같은 벤더 페이지에서 같은 규칙(`windows/` 에 옮겨 둔 파서)으로 읽습니다.
+업데이트 확인은 아직 없습니다.
+
 ## 패널 읽는 법
 
 ```
