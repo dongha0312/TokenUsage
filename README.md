@@ -135,6 +135,21 @@ Everything is in the panel:
 
 ---
 
+## Windows
+
+There's a Windows version too: a tray app that draws the percentage left right on its icon.
+Click the icon to see every limit and the rest of the settings.
+
+1. Download `TokenUsage.exe` from [Releases](https://github.com/dongha0312/TokenUsage/releases).
+   It's a single file with everything bundled, so you don't need to install .NET.
+2. Run it. If SmartScreen warns about an unrecognized app, choose **More info → Run anyway**,
+   because the exe isn't code-signed.
+3. Click the tray icon, then **Sign in to Claude / Codex / Gemini**. You only do this once.
+
+It needs Windows 10 or 11 with the Microsoft Edge WebView2 Runtime, which those versions already have.
+The numbers come from the same vendor pages and are parsed by a port of the same rules (`windows/`).
+There is no update check yet.
+
 ## Reading the panel
 
 ```

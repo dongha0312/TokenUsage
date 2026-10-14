@@ -8,3 +8,5 @@ xcuserdata/
 *.xcuserstate
 Xcode/AppIcon.iconset/
 graphify-out/
+bin/
+obj/
