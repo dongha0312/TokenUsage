@@ -73,7 +73,21 @@ jobs:
           Get-Content $log
           exit $p.ExitCode
 
+      # 문서 스크린샷. 맥 판처럼 앱의 그리기 코드를 그대로 탄다. 깨지면 여기서 드러난다.
+      - name: Render docs screenshots
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\TokenUsage.exe -ArgumentList '--snapshot', 'shots' -PassThru -Wait
+          $count = (Get-ChildItem shots\*.png).Count
+          "생성된 이미지: $count"
+          if ($p.ExitCode -ne 0 -or $count -ne 4) { "이미지 4장이 나와야 합니다"; exit 1 }
+
       - uses: actions/upload-artifact@v4
         with:
           name: TokenUsage-windows
           path: dist/TokenUsage.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-screenshots
+          path: shots

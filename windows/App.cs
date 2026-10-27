@@ -1,6 +1,7 @@
 // Windows 트레이 앱. macOS 판의 UsageModel·WebUsageReader·LimitNotifier·LoginItem 을 옮겼다.
 // 메뉴바 글자 대신 트레이 아이콘에 남은 비율 숫자를 그리고, 패널 대신 클릭 메뉴를 띄운다.
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -15,9 +16,16 @@ static class Program
 {
     /// TokenUsage.exe --smoke <파일> : 트레이·웹뷰 경로를 한 바퀴 돌리고 결과를 파일에 남긴 뒤 끝낸다.
     /// CI 에서 실제 exe 가 Windows 에서 뜨는지 확인하는 용도다.
+    /// TokenUsage.exe --snapshot <디렉터리> : 샘플 값으로 메뉴와 트레이 아이콘을 PNG 로 떠낸다.
     [STAThread]
     static int Main(string[] args)
     {
+        if (args is ["--snapshot", var dir, ..])
+        {
+            ApplicationConfiguration.Initialize();
+            TrayApp.Snapshot(dir);
+            return 0;
+        }
         var smoke = args.Length >= 2 && args[0] == "--smoke" ? args[1] : null;
         using var mutex = new Mutex(true, @"Local\TokenUsage", out var first);
         if (!first && smoke == null) return 0;   // 이미 떠 있다
@@ -87,6 +95,25 @@ static class Settings
         if (Get("DidAutoRegister", 0) == 1) return;
         LaunchAtLogin = true;
         Set("DidAutoRegister", 1);
+    }
+
+    /// Windows 11 은 새 트레이 아이콘을 ^ 안에 숨긴다. 숫자가 보여야 쓸모가 있으니 한 번만 꺼내둔다.
+    /// 사용자가 다시 숨기면 그대로 둔다. 탐색기가 아이콘을 본 뒤에야 키를 만들어서 찾을 때까지 매번 시도한다.
+    /// ExecutablePath 는 "{알려진 폴더 GUID}\TokenUsage.exe" 꼴이라 파일 이름으로만 맞춘다.
+    public static void PromoteTrayIconOnce()
+    {
+        if (Get("DidPromote", 0) == 1) return;
+        using var root = Registry.CurrentUser.OpenSubKey(@"Control Panel\NotifyIconSettings");
+        if (root == null) return;   // Windows 10 에는 없다
+        var exe = @"\" + Path.GetFileName(Environment.ProcessPath);
+        foreach (var name in root.GetSubKeyNames())
+        {
+            using var k = root.OpenSubKey(name, writable: true);
+            if (k?.GetValue("ExecutablePath") is not string p || !p.EndsWith(exe, StringComparison.OrdinalIgnoreCase)) continue;
+            k.SetValue("IsPromoted", 1, RegistryValueKind.DWord);
+            Set("DidPromote", 1);
+            return;
+        }
     }
 }
 
@@ -256,7 +283,6 @@ sealed class TrayApp : ApplicationContext
     public static readonly Icon AppIcon =
         Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? SystemIcons.Application;
 
-    readonly bool smoke;
     public int ExitCode;
     readonly NotifyIcon tray = new();
     readonly ContextMenuStrip menu = new();
@@ -272,9 +298,8 @@ sealed class TrayApp : ApplicationContext
     Provider? refreshingProvider;
     Icon? currentIcon;
 
-    public TrayApp(bool smoke)
+    public TrayApp(bool smoke, bool snapshot = false)
     {
-        this.smoke = smoke;
         tray.Icon = AppIcon;
         tray.Text = "TokenUsage";
         tray.ContextMenuStrip = menu;
@@ -285,12 +310,13 @@ sealed class TrayApp : ApplicationContext
             if (e.Button == MouseButtons.Left)
                 typeof(NotifyIcon).GetMethod("ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(tray, null);
         };
+        if (snapshot) return;   // 그리기만 한다. 트레이에 올리지 않는다
         tray.Visible = true;
 
         if (smoke) { RunSmoke(); return; }
 
         Settings.RegisterOnFirstLaunch();
-        Loop(() => TimeSpan.FromSeconds(10), RefreshLocal);
+        Loop(() => TimeSpan.FromSeconds(10), () => { Settings.PromoteTrayIconOnce(); return RefreshLocal(); });
         // 주기는 메뉴에서 바뀔 수 있으므로 매 회차에 다시 읽는다.
         Loop(() => TimeSpan.FromMinutes(Settings.RefreshMinutes), RefreshWeb);
     }
@@ -438,7 +464,7 @@ sealed class TrayApp : ApplicationContext
         var now = DateTimeOffset.Now;
         var urgent = Usage.MostUrgent(usages);
         var old = currentIcon;
-        currentIcon = DrawIcon(Usage.TrayNumber(usages), urgent?.Window.Severity ?? Severity.Normal);
+        currentIcon = DrawIcon(Usage.TrayNumber(usages), urgent?.Window.Severity ?? Severity.Normal, TaskbarIsLight());
         tray.Icon = currentIcon;
         old?.Dispose();
 
@@ -458,20 +484,23 @@ sealed class TrayApp : ApplicationContext
 
     [DllImport("user32.dll")] static extern bool DestroyIcon(IntPtr handle);
 
+    /// 경고·위험 색. 밝은 바탕에서는 맥 시스템 색 그대로면 흐려서 진한 쪽을 쓴다.
+    static Color? Alert(Severity severity, bool onLight) => severity switch
+    {
+        Severity.Critical => onLight ? Color.FromArgb(215, 0, 21) : Color.FromArgb(255, 69, 58),
+        Severity.Warning => onLight ? Color.FromArgb(201, 52, 0) : Color.FromArgb(255, 159, 10),
+        _ => null,
+    };
+
     /// 트레이에는 글자를 못 올린다. 남은 비율 숫자를 아이콘에 직접 그린다. 경고면 주황, 위험이면 빨강.
-    static Icon DrawIcon(int? remaining, Severity severity)
+    static Icon DrawIcon(int? remaining, Severity severity, bool lightTaskbar)
     {
         var size = SystemInformation.SmallIconSize;
         using var bmp = new Bitmap(size.Width, size.Height);
         using (var g = Graphics.FromImage(bmp))
         {
             g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
-            var color = severity switch
-            {
-                Severity.Critical => Color.FromArgb(255, 69, 58),
-                Severity.Warning => Color.FromArgb(255, 159, 10),
-                _ => TaskbarIsLight() ? Color.Black : Color.White,
-            };
+            var color = Alert(severity, lightTaskbar) ?? (lightTaskbar ? Color.Black : Color.White);
             var text = remaining?.ToString() ?? "–";
             using var fmt = new StringFormat(StringFormat.GenericTypographic)
                 { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
@@ -506,15 +535,13 @@ sealed class TrayApp : ApplicationContext
         {
             var header = u.Provider.ToString() + (u.Plan != null ? $"  ·  {u.Plan}" : "");
             menu.Items.Add(new ToolStripMenuItem(header) { Font = bold, Enabled = true });
+            // 수치는 단축키 자리에 둬서 오른쪽 한 열로 맞춘다.
             foreach (var w in u.Windows)
-                menu.Items.Add(new ToolStripMenuItem($"    {w.Label}    {w.Summary(now)}")
+                menu.Items.Add(new ToolStripMenuItem($"    {w.Label}")
                 {
-                    ForeColor = w.Severity switch
-                    {
-                        Severity.Critical => Color.FromArgb(215, 0, 21),
-                        Severity.Warning => Color.FromArgb(201, 52, 0),
-                        _ => SystemColors.MenuText,
-                    },
+                    ShortcutKeyDisplayString = w.Summary(now),
+                    ForeColor = Alert(w.Severity, true) ?? SystemColors.MenuText,
+                    Image = w.UsedPercent is double used ? Meter(used, w.Severity, menu.ImageScalingSize) : null,
                 });
             var extra = new[] { u.Note, Usage.UpdatedAgo(u.UpdatedAt, now) }.Where(s => s != null);
             foreach (var s in extra) menu.Items.Add(new ToolStripMenuItem($"    {s}") { Enabled = false });
@@ -559,6 +586,88 @@ sealed class TrayApp : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(L10n.Quit, null, (_, _) => Quit());
         menu.ResumeLayout();
+    }
+
+    /// 줄 앞의 작은 원그래프. 맥 패널 막대와 같은 색 규칙(파랑, 80% 넘으면 주황, 95% 넘으면 빨강).
+    static Bitmap Meter(double used, Severity severity, Size size)
+    {
+        var bmp = new Bitmap(size.Width, size.Height);
+        using var g = Graphics.FromImage(bmp);
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        var r = new RectangleF(1, 1, size.Width - 2, size.Height - 2);
+        using var track = new SolidBrush(Color.FromArgb(50, 0, 0, 0));
+        using var fill = new SolidBrush(Alert(severity, true) ?? Color.FromArgb(0, 122, 255));
+        g.FillEllipse(track, r);
+        if (used > 0) g.FillPie(fill, r.X, r.Y, r.Width, r.Height, -90, (float)(used * 3.6));
+        return bmp;
+    }
+
+    /// --snapshot: 문서용 이미지. 맥 판 --snapshot 처럼 목업이 아니라 BuildMenu·DrawIcon 을 그대로 탄다.
+    public static void Snapshot(string dir)
+    {
+        Directory.CreateDirectory(dir);
+        var now = DateTimeOffset.Now;
+        // 맥 판과 같은 샘플. Codex 세션을 경고 구간에 둬서 색이 어떻게 보이는지도 담는다.
+        List<ProviderUsage> sample =
+        [
+            new(Provider.Claude, [
+                new(new WindowKind.Session(5), 34, now.AddMinutes(190)),
+                new(new WindowKind.WeeklyAllModels(), 12, now.AddDays(3)),
+                new(new WindowKind.WeeklyScoped("Opus"), 3, now.AddDays(3)),
+            ], now, "MAX"),
+            new(Provider.Codex, [
+                new(new WindowKind.Session(5), 86, now.AddMinutes(41)),
+                new(new WindowKind.Weekly(), 45, now.AddDays(2)),
+            ], now.AddMinutes(-14), "PLUS"),
+            new(Provider.Gemini, [
+                new(new WindowKind.Session(null), 8, now.AddMinutes(52)),
+                new(new WindowKind.Weekly(), 21, now.AddDays(5)),
+            ], now, "PRO"),
+        ];
+
+        var original = L10n.IsKorean;
+        foreach (var (korean, lang) in new[] { (false, "en"), (true, "ko") })
+        {
+            L10n.IsKorean = korean;
+            var app = new TrayApp(smoke: false, snapshot: true) { usages = sample };
+            foreach (var u in sample) app.live[u.Provider] = u;
+            app.BuildMenu();
+            var size = app.menu.GetPreferredSize(Size.Empty);
+            app.menu.Size = size;
+            using var bmp = new Bitmap(size.Width, size.Height);
+            app.menu.DrawToBitmap(bmp, new Rectangle(Point.Empty, size));
+            bmp.Save(Path.Combine(dir, $"windows-menu-{lang}.png"));
+            app.tray.Dispose();
+        }
+        L10n.IsKorean = original;
+
+        // 작업 표시줄 한 칸처럼 바탕을 깔고 경우별 아이콘을 나란히 둔 뒤, 픽셀이 보이게 3배로 키운다.
+        (int? Left, Severity Severity)[] cases =
+            [(66, Severity.Normal), (14, Severity.Warning), (3, Severity.Critical), (null, Severity.Normal)];
+        var icon = SystemInformation.SmallIconSize;
+        const int gap = 8, scale = 3;
+        foreach (var (light, mode) in new[] { (true, "light"), (false, "dark") })
+        {
+            using var strip = new Bitmap(gap + cases.Length * (icon.Width + gap), icon.Height + 2 * gap);
+            using (var g = Graphics.FromImage(strip))
+            {
+                g.Clear(light ? Color.FromArgb(243, 243, 243) : Color.FromArgb(32, 32, 32));
+                for (var i = 0; i < cases.Length; i++)
+                {
+                    using var ic = DrawIcon(cases[i].Left, cases[i].Severity, light);
+                    using var b = ic.ToBitmap();
+                    g.DrawImage(b, gap + i * (icon.Width + gap), gap);
+                }
+            }
+            using var big = new Bitmap(strip.Width * scale, strip.Height * scale);
+            using (var g = Graphics.FromImage(big))
+            {
+                g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                g.PixelOffsetMode = PixelOffsetMode.Half;
+                g.DrawImage(strip, 0, 0, big.Width, big.Height);
+            }
+            big.Save(Path.Combine(dir, $"windows-tray-{mode}.png"));
+        }
     }
 
     void RefreshAll()
