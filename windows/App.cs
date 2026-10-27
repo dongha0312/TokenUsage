@@ -297,6 +297,8 @@ sealed class TrayApp : ApplicationContext
     bool refreshingWeb;
     Provider? refreshingProvider;
     Icon? currentIcon;
+    /// 스냅샷이 메뉴 명암을 고정할 때만 쓴다.
+    bool? darkMenu;
 
     public TrayApp(bool smoke, bool snapshot = false)
     {
@@ -530,21 +532,32 @@ sealed class TrayApp : ApplicationContext
         menu.SuspendLayout();
         menu.Items.Clear();
         var bold = new Font(menu.Font, FontStyle.Bold);
+        // 메뉴는 작업 표시줄에서 열리니 그 명암을 따른다. 고대비 모드면 시스템 색을 그대로 둔다.
+        var dark = darkMenu ?? (!TaskbarIsLight() && !SystemInformation.HighContrast);
+        menu.Renderer = dark ? MenuRenderer.Dark : MenuRenderer.Light;
 
         foreach (var u in usages)
         {
             var header = u.Provider.ToString() + (u.Plan != null ? $"  ·  {u.Plan}" : "");
             menu.Items.Add(new ToolStripMenuItem(header) { Font = bold, Enabled = true });
-            // 수치는 단축키 자리에 둬서 오른쪽 한 열로 맞춘다.
+            // 수치는 단축키 자리에 둬서 오른쪽 한 열로 맞추고, 밑에 맥 패널처럼 막대를 단다.
             foreach (var w in u.Windows)
-                menu.Items.Add(new ToolStripMenuItem($"    {w.Label}")
+            {
+                var row = new ToolStripMenuItem(w.Label)
                 {
                     ShortcutKeyDisplayString = w.Summary(now),
-                    ForeColor = Alert(w.Severity, true) ?? SystemColors.MenuText,
-                    Image = w.UsedPercent is double used ? Meter(used, w.Severity, menu.ImageScalingSize) : null,
-                });
+                    ForeColor = Alert(w.Severity, !dark) ?? SystemColors.MenuText,
+                };
+                menu.Items.Add(row);
+                if (w.UsedPercent is not double used) continue;
+                var bar = new UsageBar(used,
+                    Alert(w.Severity, !dark) ?? (dark ? Color.FromArgb(10, 132, 255) : Color.FromArgb(0, 122, 255)),
+                    dark ? Color.FromArgb(60, 255, 255, 255) : Color.FromArgb(30, 0, 0, 0));
+                row.Tag = bar;
+                menu.Items.Add(bar);
+            }
             var extra = new[] { u.Note, Usage.UpdatedAgo(u.UpdatedAt, now) }.Where(s => s != null);
-            foreach (var s in extra) menu.Items.Add(new ToolStripMenuItem($"    {s}") { Enabled = false });
+            foreach (var s in extra) menu.Items.Add(new ToolStripMenuItem(s) { Enabled = false });
             menu.Items.Add(new ToolStripSeparator());
         }
 
@@ -588,20 +601,6 @@ sealed class TrayApp : ApplicationContext
         menu.ResumeLayout();
     }
 
-    /// 줄 앞의 작은 원그래프. 맥 패널 막대와 같은 색 규칙(파랑, 80% 넘으면 주황, 95% 넘으면 빨강).
-    static Bitmap Meter(double used, Severity severity, Size size)
-    {
-        var bmp = new Bitmap(size.Width, size.Height);
-        using var g = Graphics.FromImage(bmp);
-        g.SmoothingMode = SmoothingMode.AntiAlias;
-        var r = new RectangleF(1, 1, size.Width - 2, size.Height - 2);
-        using var track = new SolidBrush(Color.FromArgb(50, 0, 0, 0));
-        using var fill = new SolidBrush(Alert(severity, true) ?? Color.FromArgb(0, 122, 255));
-        g.FillEllipse(track, r);
-        if (used > 0) g.FillPie(fill, r.X, r.Y, r.Width, r.Height, -90, (float)(used * 3.6));
-        return bmp;
-    }
-
     /// --snapshot: 문서용 이미지. 맥 판 --snapshot 처럼 목업이 아니라 BuildMenu·DrawIcon 을 그대로 탄다.
     public static void Snapshot(string dir)
     {
@@ -627,16 +626,17 @@ sealed class TrayApp : ApplicationContext
 
         var original = L10n.IsKorean;
         foreach (var (korean, lang) in new[] { (false, "en"), (true, "ko") })
+        foreach (var (dark, mode) in new[] { (false, "light"), (true, "dark") })
         {
             L10n.IsKorean = korean;
-            var app = new TrayApp(smoke: false, snapshot: true) { usages = sample };
+            var app = new TrayApp(smoke: false, snapshot: true) { usages = sample, darkMenu = dark };
             foreach (var u in sample) app.live[u.Provider] = u;
             app.BuildMenu();
             var size = app.menu.GetPreferredSize(Size.Empty);
             app.menu.Size = size;
             using var bmp = new Bitmap(size.Width, size.Height);
             app.menu.DrawToBitmap(bmp, new Rectangle(Point.Empty, size));
-            bmp.Save(Path.Combine(dir, $"windows-menu-{lang}.png"));
+            bmp.Save(Path.Combine(dir, $"windows-menu-{lang}-{mode}.png"));
             app.tray.Dispose();
         }
         L10n.IsKorean = original;
@@ -693,5 +693,101 @@ sealed class TrayApp : ApplicationContext
         tray.Visible = false;
         tray.Dispose();
         ExitThread();
+    }
+}
+
+/// 한도 줄 밑의 막대. 메뉴 항목은 높이가 모두 같아서 줄 안에 넣을 자리가 없어 따로 한 줄을 쓴다.
+/// 글자 열의 위치는 공개 API로 알 수 없다. 바로 위 줄을 그릴 때 렌더러가 Column 에 넣어준다.
+sealed class UsageBar : ToolStripItem
+{
+    public (int Left, int Right) Column;
+    readonly double used;
+    readonly Color fill, track;
+
+    public UsageBar(double used, Color fill, Color track)
+    {
+        (this.used, this.fill, this.track) = (used, fill, track);
+        // 폭은 메뉴를 넓히지 않게 1로 두고, 좌우 고정으로 열 너비만큼 늘린다.
+        Anchor = AnchorStyles.Left | AnchorStyles.Right;
+    }
+
+    public override bool CanSelect => false;
+    // 막대를 맨 위에 붙이고 아래를 비워서, 다음 줄보다 제 줄에 가까워 보이게 한다.
+    public override Size GetPreferredSize(Size constrainingSize) => new(1, Owner?.LogicalToDeviceUnits(10) ?? 10);
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        if (Column.Right <= Column.Left) return;   // 위 줄이 아직 안 그려졌다
+        var t = Owner?.LogicalToDeviceUnits(4) ?? 4;
+        // 둥근 끝이 선 밖으로 t/2 나가므로 그만큼 안쪽에서 긋는다. 2는 글자 여백에 맞춘 것.
+        float left = Column.Left - Bounds.X + 2 + t / 2f, right = Column.Right - Bounds.X - 2 - t / 2f, y = t / 2f;
+        var g = e.Graphics;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        using var pen = new Pen(track, t) { StartCap = LineCap.Round, EndCap = LineCap.Round };
+        g.DrawLine(pen, left, y, right, y);
+        if (used <= 0) return;
+        pen.Color = fill;
+        g.DrawLine(pen, left, y, left + (right - left) * (float)(used / 100), y);
+    }
+}
+
+/// 메뉴 렌더러. 막대에 글자 열을 알려주고, 어두우면 색을 바꾼다. WinForms 메뉴는 Windows 다크 모드를
+/// 따르지 않는다. 색표만 바꿔서는 안 되는 게, 글자·화살표·체크를 SystemColors(검정)로 박아 그리기 때문이다.
+/// 그 셋은 여기서 직접 칠한다.
+sealed class MenuRenderer : ToolStripProfessionalRenderer
+{
+    public static readonly MenuRenderer Light = new(false), Dark = new(true);
+    readonly bool dark;
+    MenuRenderer(bool dark) : base(dark ? new Palette() : new ProfessionalColorTable()) => this.dark = dark;
+
+    static readonly Color Back = Color.FromArgb(43, 43, 43), Hover = Color.FromArgb(65, 65, 65),
+        Line = Color.FromArgb(75, 75, 75), Text = Color.FromArgb(242, 242, 242), Dim = Color.FromArgb(150, 150, 150);
+
+    sealed class Palette : ProfessionalColorTable
+    {
+        public override Color ToolStripDropDownBackground => Back;
+        public override Color ImageMarginGradientBegin => Back;
+        public override Color ImageMarginGradientMiddle => Back;
+        public override Color ImageMarginGradientEnd => Back;
+        public override Color MenuBorder => Line;
+        public override Color MenuItemBorder => Hover;
+        public override Color MenuItemSelectedGradientBegin => Hover;
+        public override Color MenuItemSelectedGradientEnd => Hover;
+        public override Color SeparatorDark => Line;
+        public override Color SeparatorLight => Back;
+    }
+
+    protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+    {
+        // 메뉴 좌표로 넘긴다. 메뉴는 막대 같은 일반 항목을 아이콘 열 뒤에서부터 놓아서 항목 좌표가 서로 다르다.
+        if (e.Item?.Tag is UsageBar bar)
+            bar.Column = (e.Item.Bounds.X + e.TextRectangle.Left, e.Item.Bounds.X + e.TextRectangle.Right);
+        if (!dark) { base.OnRenderItemText(e); return; }
+        // 경고색처럼 직접 준 색은 살리고, 시스템 기본색(검정)만 밝은 글자로 바꾼다.
+        TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont, e.TextRectangle,
+            e.Item is not { Enabled: true } ? Dim : e.TextColor.IsSystemColor ? Text : e.TextColor, e.TextFormat);
+    }
+
+    protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
+    {
+        if (dark) e.ArrowColor = e.Item is { Enabled: true } ? Text : Dim;
+        base.OnRenderArrow(e);
+    }
+
+    // 기본 체크는 검은 그림이라 어두운 바탕에 묻힌다. 선으로 긋는다.
+    protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
+    {
+        if (!dark) { base.OnRenderItemCheck(e); return; }
+        var (g, r) = (e.Graphics, e.ImageRectangle);
+        var smoothing = g.SmoothingMode;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        using var pen = new Pen(Text, Math.Max(1.5f, r.Height / 10f));
+        g.DrawLines(pen, new PointF[]
+        {
+            new(r.X + r.Width * .22f, r.Y + r.Height * .52f),
+            new(r.X + r.Width * .42f, r.Y + r.Height * .72f),
+            new(r.X + r.Width * .78f, r.Y + r.Height * .30f),
+        });
+        g.SmoothingMode = smoothing;
     }
 }
