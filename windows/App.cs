@@ -297,6 +297,8 @@ sealed class TrayApp : ApplicationContext
     bool refreshingWeb;
     Provider? refreshingProvider;
     Icon? currentIcon;
+    /// 스냅샷이 메뉴 명암을 고정할 때만 쓴다.
+    bool? darkMenu;
 
     public TrayApp(bool smoke, bool snapshot = false)
     {
@@ -530,6 +532,9 @@ sealed class TrayApp : ApplicationContext
         menu.SuspendLayout();
         menu.Items.Clear();
         var bold = new Font(menu.Font, FontStyle.Bold);
+        // 메뉴는 작업 표시줄에서 열리니 그 명암을 따른다. 고대비 모드면 시스템 색을 그대로 둔다.
+        var dark = darkMenu ?? (!TaskbarIsLight() && !SystemInformation.HighContrast);
+        menu.Renderer = dark ? DarkMenu.Instance : ToolStripManager.Renderer;
 
         foreach (var u in usages)
         {
@@ -540,8 +545,8 @@ sealed class TrayApp : ApplicationContext
                 menu.Items.Add(new ToolStripMenuItem($"    {w.Label}")
                 {
                     ShortcutKeyDisplayString = w.Summary(now),
-                    ForeColor = Alert(w.Severity, true) ?? SystemColors.MenuText,
-                    Image = w.UsedPercent is double used ? Meter(used, w.Severity, menu.ImageScalingSize) : null,
+                    ForeColor = Alert(w.Severity, !dark) ?? SystemColors.MenuText,
+                    Image = w.UsedPercent is double used ? Meter(used, w.Severity, menu.ImageScalingSize, dark) : null,
                 });
             var extra = new[] { u.Note, Usage.UpdatedAgo(u.UpdatedAt, now) }.Where(s => s != null);
             foreach (var s in extra) menu.Items.Add(new ToolStripMenuItem($"    {s}") { Enabled = false });
@@ -589,14 +594,14 @@ sealed class TrayApp : ApplicationContext
     }
 
     /// 줄 앞의 작은 원그래프. 맥 패널 막대와 같은 색 규칙(파랑, 80% 넘으면 주황, 95% 넘으면 빨강).
-    static Bitmap Meter(double used, Severity severity, Size size)
+    static Bitmap Meter(double used, Severity severity, Size size, bool dark)
     {
         var bmp = new Bitmap(size.Width, size.Height);
         using var g = Graphics.FromImage(bmp);
         g.SmoothingMode = SmoothingMode.AntiAlias;
         var r = new RectangleF(1, 1, size.Width - 2, size.Height - 2);
-        using var track = new SolidBrush(Color.FromArgb(50, 0, 0, 0));
-        using var fill = new SolidBrush(Alert(severity, true) ?? Color.FromArgb(0, 122, 255));
+        using var track = new SolidBrush(dark ? Color.FromArgb(70, 255, 255, 255) : Color.FromArgb(50, 0, 0, 0));
+        using var fill = new SolidBrush(Alert(severity, !dark) ?? (dark ? Color.FromArgb(10, 132, 255) : Color.FromArgb(0, 122, 255)));
         g.FillEllipse(track, r);
         if (used > 0) g.FillPie(fill, r.X, r.Y, r.Width, r.Height, -90, (float)(used * 3.6));
         return bmp;
@@ -627,16 +632,17 @@ sealed class TrayApp : ApplicationContext
 
         var original = L10n.IsKorean;
         foreach (var (korean, lang) in new[] { (false, "en"), (true, "ko") })
+        foreach (var (dark, mode) in new[] { (false, "light"), (true, "dark") })
         {
             L10n.IsKorean = korean;
-            var app = new TrayApp(smoke: false, snapshot: true) { usages = sample };
+            var app = new TrayApp(smoke: false, snapshot: true) { usages = sample, darkMenu = dark };
             foreach (var u in sample) app.live[u.Provider] = u;
             app.BuildMenu();
             var size = app.menu.GetPreferredSize(Size.Empty);
             app.menu.Size = size;
             using var bmp = new Bitmap(size.Width, size.Height);
             app.menu.DrawToBitmap(bmp, new Rectangle(Point.Empty, size));
-            bmp.Save(Path.Combine(dir, $"windows-menu-{lang}.png"));
+            bmp.Save(Path.Combine(dir, $"windows-menu-{lang}-{mode}.png"));
             app.tray.Dispose();
         }
         L10n.IsKorean = original;
@@ -693,5 +699,55 @@ sealed class TrayApp : ApplicationContext
         tray.Visible = false;
         tray.Dispose();
         ExitThread();
+    }
+}
+
+/// 어두운 메뉴. WinForms 메뉴는 Windows 다크 모드를 따르지 않는다. 색표만 바꿔서는 안 되는 게,
+/// 글자·화살표·체크를 SystemColors(검정)로 박아 그리기 때문이다. 그 셋은 여기서 직접 칠한다.
+sealed class DarkMenu() : ToolStripProfessionalRenderer(new Palette())
+{
+    public static readonly DarkMenu Instance = new();
+    static readonly Color Back = Color.FromArgb(43, 43, 43), Hover = Color.FromArgb(65, 65, 65),
+        Line = Color.FromArgb(75, 75, 75), Text = Color.FromArgb(242, 242, 242), Dim = Color.FromArgb(150, 150, 150);
+
+    sealed class Palette : ProfessionalColorTable
+    {
+        public override Color ToolStripDropDownBackground => Back;
+        public override Color ImageMarginGradientBegin => Back;
+        public override Color ImageMarginGradientMiddle => Back;
+        public override Color ImageMarginGradientEnd => Back;
+        public override Color MenuBorder => Line;
+        public override Color MenuItemBorder => Hover;
+        public override Color MenuItemSelectedGradientBegin => Hover;
+        public override Color MenuItemSelectedGradientEnd => Hover;
+        public override Color SeparatorDark => Line;
+        public override Color SeparatorLight => Back;
+    }
+
+    // 경고색처럼 직접 준 색은 살리고, 시스템 기본색(검정)만 밝은 글자로 바꾼다.
+    protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e) =>
+        TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont, e.TextRectangle,
+            e.Item is not { Enabled: true } ? Dim : e.TextColor.IsSystemColor ? Text : e.TextColor, e.TextFormat);
+
+    protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
+    {
+        e.ArrowColor = e.Item is { Enabled: true } ? Text : Dim;
+        base.OnRenderArrow(e);
+    }
+
+    // 기본 체크는 검은 그림이라 어두운 바탕에 묻힌다. 선으로 긋는다.
+    protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
+    {
+        var (g, r) = (e.Graphics, e.ImageRectangle);
+        var smoothing = g.SmoothingMode;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        using var pen = new Pen(Text, Math.Max(1.5f, r.Height / 10f));
+        g.DrawLines(pen, new PointF[]
+        {
+            new(r.X + r.Width * .22f, r.Y + r.Height * .52f),
+            new(r.X + r.Width * .42f, r.Y + r.Height * .72f),
+            new(r.X + r.Width * .78f, r.Y + r.Height * .30f),
+        });
+        g.SmoothingMode = smoothing;
     }
 }

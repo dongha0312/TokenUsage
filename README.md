@@ -145,7 +145,10 @@ Click the icon to see every limit and the rest of the settings.
   <img src="docs/windows-tray-light.png" width="208" alt="Tray icons: normal, past 80%, past 95%, no data">
 </picture>
 
-<img src="docs/windows-menu-en.png" width="285" alt="The Windows tray menu">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/windows-menu-en-dark.png">
+  <img src="docs/windows-menu-en-light.png" width="285" alt="The Windows tray menu">
+</picture>
 
 1. Download `TokenUsage.exe` from [Releases](https://github.com/dongha0312/TokenUsage/releases).
    It's a single file with everything bundled, so you don't need to install .NET.
