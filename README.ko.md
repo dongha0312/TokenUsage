@@ -139,6 +139,13 @@ TEAM_ID=팀ID ./build.sh --install
 Windows 판도 있습니다. 트레이 아이콘에 남은 비율 숫자를 그려 보여주고,
 아이콘을 누르면 모든 한도와 설정이 나옵니다.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/windows-tray-dark.png">
+  <img src="docs/windows-tray-light.png" width="208" alt="트레이 아이콘: 보통, 80% 넘음, 95% 넘음, 값 없음">
+</picture>
+
+<img src="docs/windows-menu-ko.png" width="281" alt="Windows 트레이 메뉴">
+
 1. [Releases](https://github.com/dongha0312/TokenUsage/releases) 에서 `TokenUsage.exe` 를 받습니다.
    런타임까지 한 파일에 들어 있어 .NET 을 따로 설치할 필요가 없습니다.
 2. 실행합니다. 코드 서명이 없어서 SmartScreen 이 막으면 **추가 정보 → 실행** 을 누르세요.
