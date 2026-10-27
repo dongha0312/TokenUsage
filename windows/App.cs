@@ -712,14 +712,15 @@ sealed class UsageBar : ToolStripItem
     }
 
     public override bool CanSelect => false;
-    public override Size GetPreferredSize(Size constrainingSize) => new(1, Owner?.LogicalToDeviceUnits(8) ?? 8);
+    // 막대를 맨 위에 붙이고 아래를 비워서, 다음 줄보다 제 줄에 가까워 보이게 한다.
+    public override Size GetPreferredSize(Size constrainingSize) => new(1, Owner?.LogicalToDeviceUnits(10) ?? 10);
 
     protected override void OnPaint(PaintEventArgs e)
     {
         if (Column.Right <= Column.Left) return;   // 위 줄이 아직 안 그려졌다
         var t = Owner?.LogicalToDeviceUnits(4) ?? 4;
         // 둥근 끝이 선 밖으로 t/2 나가므로 그만큼 안쪽에서 긋는다. 2는 글자 여백에 맞춘 것.
-        float left = Column.Left + 2 + t / 2f, right = Column.Right - 2 - t / 2f, y = t / 2f + 1;
+        float left = Column.Left - Bounds.X + 2 + t / 2f, right = Column.Right - Bounds.X - 2 - t / 2f, y = t / 2f;
         var g = e.Graphics;
         g.SmoothingMode = SmoothingMode.AntiAlias;
         using var pen = new Pen(track, t) { StartCap = LineCap.Round, EndCap = LineCap.Round };
@@ -758,7 +759,9 @@ sealed class MenuRenderer : ToolStripProfessionalRenderer
 
     protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
     {
-        if (e.Item?.Tag is UsageBar bar) bar.Column = (e.TextRectangle.Left, e.TextRectangle.Right);
+        // 메뉴 좌표로 넘긴다. 메뉴는 막대 같은 일반 항목을 아이콘 열 뒤에서부터 놓아서 항목 좌표가 서로 다르다.
+        if (e.Item?.Tag is UsageBar bar)
+            bar.Column = (e.Item.Bounds.X + e.TextRectangle.Left, e.Item.Bounds.X + e.TextRectangle.Right);
         if (!dark) { base.OnRenderItemText(e); return; }
         // 경고색처럼 직접 준 색은 살리고, 시스템 기본색(검정)만 밝은 글자로 바꾼다.
         TextRenderer.DrawText(e.Graphics, e.Text, e.TextFont, e.TextRectangle,
